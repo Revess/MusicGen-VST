@@ -1,3 +1,5 @@
 build
 bin
 .vscode
+musicgen-stereo
+quantized_musicgen

@@ -1,0 +1,80 @@
+Framework not specified. Using pt to export the model.
+/home/bas/anaconda3/envs/MUSICGEN/lib/python3.10/site-packages/torch/nn/utils/weight_norm.py:30: UserWarning: torch.nn.utils.weight_norm is deprecated in favor of torch.nn.utils.parametrizations.weight_norm.
+  warnings.warn("torch.nn.utils.weight_norm is deprecated in favor of torch.nn.utils.parametrizations.weight_norm.")
+/home/bas/anaconda3/envs/MUSICGEN/lib/python3.10/site-packages/torch/utils/_device.py:77: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.clone().detach() or sourceTensor.clone().detach().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  return func(*args, **kwargs)
+Automatic task detection to text-to-audio (possible synonyms are: text-to-speech).
+Using the export variant text-conditional-with-past. Available variants are:
+    - text-conditional-with-past: Exports Musicgen to ONNX to generate audio samples conditioned on a text prompt (Reference: https://huggingface.co/docs/transformers/model_doc/musicgen#text-conditional-generation). This uses the decoder KV cache. The following subcomponents are exported:
+		* text_encoder.onnx: corresponds to the text encoder part in https://github.com/huggingface/transformers/blob/v4.39.1/src/transformers/models/musicgen/modeling_musicgen.py#L1457.
+		* encodec_decode.onnx: corresponds to the Encodec audio encoder part in https://github.com/huggingface/transformers/blob/v4.39.1/src/transformers/models/musicgen/modeling_musicgen.py#L2472-L2480.
+		* decoder_model.onnx: The Musicgen decoder, without past key values input, and computing cross attention. Not required at inference (use decoder_model_merged.onnx instead).
+		* decoder_with_past_model.onnx: The Musicgen decoder, with past_key_values input (KV cache filled), not computing cross attention. Not required at inference (use decoder_model_merged.onnx instead).
+		* decoder_model_merged.onnx: The two previous models fused in one, to avoid duplicating weights. A boolean input `use_cache_branch` allows to select the branch to use. In the first forward pass where the KV cache is empty, dummy past key values inputs need to be passed and are ignored with use_cache_branch=False.
+		* build_delay_pattern_mask.onnx: A model taking as input `input_ids`, `pad_token_id`, `max_length`, and building a delayed pattern mask to the input_ids. Implements https://github.com/huggingface/transformers/blob/v4.39.3/src/transformers/models/musicgen/modeling_musicgen.py#L1054.
+
+***** Exporting submodel 1/5: T5EncoderModel *****
+Using framework PyTorch: 2.1.0+cu121
+
+***** Exporting submodel 2/5: EncodecModel *****
+Using framework PyTorch: 2.1.0+cu121
+/home/bas/anaconda3/envs/MUSICGEN/lib/python3.10/site-packages/optimum/exporters/onnx/model_patcher.py:942: TracerWarning: Using len to get tensor shape might cause the trace to be incorrect. Recommended usage would be tensor.shape[0]. Passing a tensor of different shape might lead to errors or silently give incorrect results.
+  if len(audio_codes) != 1:
+/home/bas/anaconda3/envs/MUSICGEN/lib/python3.10/site-packages/transformers/models/encodec/modeling_encodec.py:433: TracerWarning: torch.tensor results are registered as constants in the trace. You can safely ignore this warning if you use this function to create tensors out of constant variables that would be the same every time you call this function. In any other case, this might cause the trace to be incorrect.
+  quantized_out = torch.tensor(0.0, device=codes.device)
+/home/bas/anaconda3/envs/MUSICGEN/lib/python3.10/site-packages/transformers/models/encodec/modeling_encodec.py:434: TracerWarning: Iterating over a tensor might cause the trace to be incorrect. Passing a tensor of different shape won't change the number of iterations executed (and might lead to errors or silently give incorrect results).
+  for i, indices in enumerate(codes):
+Traceback (most recent call last):
+  File "/home/bas/anaconda3/envs/MUSICGEN/bin/optimum-cli", line 8, in <module>
+    sys.exit(main())
+  File "/home/bas/anaconda3/envs/MUSICGEN/lib/python3.10/site-packages/optimum/commands/optimum_cli.py", line 208, in main
+    service.run()
+  File "/home/bas/anaconda3/envs/MUSICGEN/lib/python3.10/site-packages/optimum/commands/export/onnx.py", line 265, in run
+    main_export(
+  File "/home/bas/anaconda3/envs/MUSICGEN/lib/python3.10/site-packages/optimum/exporters/onnx/__main__.py", line 374, in main_export
+    onnx_export_from_model(
+  File "/home/bas/anaconda3/envs/MUSICGEN/lib/python3.10/site-packages/optimum/exporters/onnx/convert.py", line 1171, in onnx_export_from_model
+    _, onnx_outputs = export_models(
+  File "/home/bas/anaconda3/envs/MUSICGEN/lib/python3.10/site-packages/optimum/exporters/onnx/convert.py", line 776, in export_models
+    export(
+  File "/home/bas/anaconda3/envs/MUSICGEN/lib/python3.10/site-packages/optimum/exporters/onnx/convert.py", line 881, in export
+    export_output = export_pytorch(
+  File "/home/bas/anaconda3/envs/MUSICGEN/lib/python3.10/site-packages/optimum/exporters/onnx/convert.py", line 577, in export_pytorch
+    onnx_export(
+  File "/home/bas/anaconda3/envs/MUSICGEN/lib/python3.10/site-packages/torch/onnx/utils.py", line 516, in export
+    _export(
+  File "/home/bas/anaconda3/envs/MUSICGEN/lib/python3.10/site-packages/torch/onnx/utils.py", line 1596, in _export
+    graph, params_dict, torch_out = _model_to_graph(
+  File "/home/bas/anaconda3/envs/MUSICGEN/lib/python3.10/site-packages/torch/onnx/utils.py", line 1135, in _model_to_graph
+    graph, params, torch_out, module = _create_jit_graph(model, args)
+  File "/home/bas/anaconda3/envs/MUSICGEN/lib/python3.10/site-packages/torch/onnx/utils.py", line 1011, in _create_jit_graph
+    graph, torch_out = _trace_and_get_graph_from_model(model, args)
+  File "/home/bas/anaconda3/envs/MUSICGEN/lib/python3.10/site-packages/torch/onnx/utils.py", line 915, in _trace_and_get_graph_from_model
+    trace_graph, torch_out, inputs_states = torch.jit._get_trace_graph(
+  File "/home/bas/anaconda3/envs/MUSICGEN/lib/python3.10/site-packages/torch/jit/_trace.py", line 1285, in _get_trace_graph
+    outs = ONNXTracedModule(
+  File "/home/bas/anaconda3/envs/MUSICGEN/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/bas/anaconda3/envs/MUSICGEN/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/bas/anaconda3/envs/MUSICGEN/lib/python3.10/site-packages/torch/jit/_trace.py", line 133, in forward
+    graph, out = torch._C._create_graph_by_tracing(
+  File "/home/bas/anaconda3/envs/MUSICGEN/lib/python3.10/site-packages/torch/jit/_trace.py", line 124, in wrapper
+    outs.append(self.inner(*trace_inputs))
+  File "/home/bas/anaconda3/envs/MUSICGEN/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/bas/anaconda3/envs/MUSICGEN/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/bas/anaconda3/envs/MUSICGEN/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1508, in _slow_forward
+    result = self.forward(*input, **kwargs)
+  File "/home/bas/anaconda3/envs/MUSICGEN/lib/python3.10/site-packages/optimum/exporters/onnx/model_patcher.py", line 944, in patched_forward
+    audio_values = self._model._decode_frame(audio_codes[0], audio_scales)
+  File "/home/bas/anaconda3/envs/MUSICGEN/lib/python3.10/site-packages/transformers/models/encodec/modeling_encodec.py", line 702, in _decode_frame
+    embeddings = self.quantizer.decode(codes)
+  File "/home/bas/anaconda3/envs/MUSICGEN/lib/python3.10/site-packages/transformers/models/encodec/modeling_encodec.py", line 435, in decode
+    layer = self.layers[i]
+  File "/home/bas/anaconda3/envs/MUSICGEN/lib/python3.10/site-packages/torch/nn/modules/container.py", line 293, in __getitem__
+    return self._modules[self._get_abs_string_index(idx)]
+  File "/home/bas/anaconda3/envs/MUSICGEN/lib/python3.10/site-packages/torch/nn/modules/container.py", line 283, in _get_abs_string_index
+    raise IndexError(f'index {idx} is out of range')
+IndexError: index 4 is out of range
