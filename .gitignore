@@ -3,3 +3,4 @@ bin
 .vscode
 musicgen-stereo
 quantized_musicgen
+musicgen_fixed 
