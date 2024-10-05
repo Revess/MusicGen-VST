@@ -685,9 +685,6 @@ class NakedDecoder(torch.nn.Module):
         bsz, num_codebooks, seq_len = input.shape
         input_shape = (bsz, seq_len)
 
-        if len(past_key_values.size()) == 1 and past_key_values[0] == 0:
-            past_key_values = None
-
         past_key_values_length = past_key_values[0][0].shape[2] if past_key_values is not None else 0
         inputs_embeds = sum([self.embed_tokens[codebook](input[:, codebook]) for codebook in range(num_codebooks)])
 
@@ -752,9 +749,10 @@ class NakedMusicGen(torch.nn.Module):
                 attention_mask: torch.Tensor, 
                 max_length: int,
                 num_codebooks: int,
-                decoder_start_token_id: int
+                decoder_start_token_id: int,
+                guidance_scale: int = 3,
+
             ):
-        # Note to self, all inputs must be used
         # TODO: add generation params over here somewhere aswell like CFG topk and temperature.
 
         ## Input the data to the text encoder
@@ -813,18 +811,38 @@ class NakedMusicGen(torch.nn.Module):
         encoder_hidden_states = self.enc_to_dec_proj(encoder_hidden_states)
         encoder_hidden_states = encoder_hidden_states * attention_mask[..., None]
 
-        past_key_values = torch.tensor([0])
+        past_key_values = None
+        pad_token_id = 2048
+        do_sample = True
 
         # TODO: use the sampling loop similar to the code of Transformers7
+        # We're at step 12 now
 
-        output = self.decoder(
+        lm_logits, next_cache = self.decoder(
             decoder_input_ids, encoder_hidden_states, attention_mask, past_key_values
         )
+
+        next_token_logits = lm_logits[:, -1, :]
+
+        next_token_scores = logits_processor(input_ids, next_token_logits)
+
+        for processor in self:
+            function_args = inspect.signature(processor.__call__).parameters
+            if len(function_args) > 2:
+                if not all(arg in kwargs for arg in list(function_args.keys())[2:]):
+                    raise ValueError(
+                        f"Make sure that all the required parameters: {list(function_args.keys())} for "
+                        f"{processor.__class__} are passed to the logits processor."
+                    )
+                scores = processor(input_ids, scores, **kwargs)
+            else:
+                scores = processor(input_ids, scores)
 
         return output
 
 if __name__ == "__main__":
     use_onnx = False
+    test = True
     folder = 'musicgen-stereo-small'
     os.makedirs(folder, exist_ok=True)
     # Undress the selected model
@@ -852,6 +870,17 @@ if __name__ == "__main__":
     max_length = 256 #This will be variable later
     outputs = processor.tokenizer(["80s pop track with bassy drums and synth"])
     input_ids, attention_mask = torch.tensor(outputs['input_ids']), torch.tensor(outputs['attention_mask'])
+
+    if test:
+        output = naked_model(
+            input_ids,
+            attention_mask,
+            torch.tensor(256, dtype=torch.int64),
+            torch.tensor(8, dtype=torch.int64),
+            torch.tensor(2048, dtype=torch.int64)
+        )
+        print(output)
+        exit()
 
     if use_onnx:
         # Start the export
@@ -902,8 +931,8 @@ if __name__ == "__main__":
         encoded = ort_session.run(None, ort_inputs)[0]
         print(encoded)
     else:
-        dummy_input_ids = torch.randint(0, 100, ( 2, 12), dtype=torch.int64)
-        dummy_attention_mask = torch.randint(0, 100, ( 2, 12), dtype=torch.int64)
+        dummy_input_ids = torch.randint(0, 100, (1, 12), dtype=torch.int64)
+        dummy_attention_mask = torch.randint(0, 100, (1, 12), dtype=torch.int64)
         dummy_max_length = torch.tensor(256, dtype=torch.int64)
         dummy_num_codebooks = torch.tensor(8, dtype=torch.int64)
         dummy_decoder_start_token_id = torch.tensor(2048, dtype=torch.int64)
