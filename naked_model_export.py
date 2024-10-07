@@ -680,7 +680,7 @@ class NakedDecoder(torch.nn.Module):
             [torch.nn.Linear(config['hidden_size'], config['vocab_size'], bias=False) for _ in range(self.num_codebooks)]
         )
 
-    def forward(self, input_ids, encoder_hidden_states, encoder_attention_mask, past_key_values):
+    def forward(self, input_ids, encoder_hidden_states, encoder_attention_mask, past_key_values, use_cache=False):
         input = input_ids.reshape(-1, self.num_codebooks, input_ids.shape[-1])
         bsz, num_codebooks, seq_len = input.shape
         input_shape = (bsz, seq_len)
@@ -714,15 +714,16 @@ class NakedDecoder(torch.nn.Module):
                 cross_attn_layer_head_mask=None,
                 past_key_value=past_key_value,
                 output_attentions=False,
-                use_cache=True,
+                use_cache=use_cache,
             )
             hidden_states = layer_outputs[0]
 
-            next_decoder_cache += (layer_outputs[1],)
+            if use_cache:
+                next_decoder_cache += (layer_outputs[1],)
 
         hidden_states = self.layer_norm(hidden_states)
 
-        next_cache = next_decoder_cache
+        next_cache = next_decoder_cache if use_cache else None
 
         lm_logits = torch.stack([head(hidden_states) for head in self.lm_heads], dim=1)
 
@@ -736,11 +737,13 @@ class NakedMusicGen(torch.nn.Module):
 
     def __init__(self, 
                 text_encoder: PreTrainedModel, 
+                audio_encoder,
                 enc_to_dec_proj: torch.nn.Linear, 
                 decoder: NakedDecoder
             ):
         super().__init__()
         self.text_encoder = text_encoder
+        self.audio_encoder = audio_encoder
         self.enc_to_dec_proj = enc_to_dec_proj
         self.decoder = decoder
 
@@ -778,11 +781,13 @@ class NakedMusicGen(torch.nn.Module):
                 temperature: float = 0.7,
                 topk: int = 250,
                 topp: float = 0.0,
+                use_cache = True
             ):
         min_tokens_to_keep = 1
         filter_value = -float("inf")
+        audio_scales = None # Is none in the model_kwargs, I excpect this will be defined when we look at the audio input model version
 
-        # TODO: add generation params over here somewhere aswell like CFG topk and temperature.
+        batch_size = input_ids.shape[0]
 
         ## Input the data to the text encoder
         encoded = self.text_encoder(input_ids)
@@ -793,7 +798,7 @@ class NakedMusicGen(torch.nn.Module):
         attention_mask = torch.concatenate([attention_mask, torch.zeros_like(attention_mask)], dim=0)
 
         # Prepare for decoder inputs
-        decoder_input_ids = torch.ones((input_ids.size(0) * num_codebooks, 1), dtype=torch.long) * decoder_start_token_id
+        decoder_input_ids = torch.ones((input_ids.size(0) * num_codebooks, 1), dtype=torch.long, device=input_ids.device) * decoder_start_token_id
 
         # Just remember this as when the user wants a really small sample 
         # Really small is max_len < (2 * num_codebooks - 1)
@@ -803,7 +808,7 @@ class NakedMusicGen(torch.nn.Module):
         decoder_input_ids = decoder_input_ids.reshape(-1, num_codebooks, decoder_input_ids.shape[-1])
         bsz, num_codebooks, seq_len = decoder_input_ids.shape
         channel_codebooks = num_codebooks // 2 # We know it is 2 because we just care about the stereo version. TODO: impl a version for mono etc.
-        decoder_ids_shifted = torch.ones((bsz, num_codebooks, max_length), dtype=torch.long) * -1
+        decoder_ids_shifted = torch.ones((bsz, num_codebooks, max_length), dtype=torch.long, device=input_ids.device) * -1
 
         # Now fill the shifted ids with the prompt
         for codebook in range(channel_codebooks):
@@ -811,9 +816,9 @@ class NakedMusicGen(torch.nn.Module):
             decoder_ids_shifted[:, 2 * codebook + 1, codebook : seq_len + codebook] = decoder_input_ids[:, 2 * codebook + 1]
 
         delay_pattern = torch.triu(
-            torch.ones((channel_codebooks, max_length), dtype=torch.bool), diagonal = max_length - channel_codebooks + 1
+            torch.ones((channel_codebooks, max_length), dtype=torch.bool, device=input_ids.device), diagonal = max_length - channel_codebooks + 1
         )
-        delay_pattern = delay_pattern + torch.tril(torch.ones((channel_codebooks, max_length), dtype=torch.bool))
+        delay_pattern = delay_pattern + torch.tril(torch.ones((channel_codebooks, max_length), dtype=torch.bool, device=input_ids.device))
         delay_pattern = delay_pattern.repeat_interleave(2, dim=0)
 
         mask = ~delay_pattern.to(input_ids.device)
@@ -832,7 +837,7 @@ class NakedMusicGen(torch.nn.Module):
         past_key_values = None
         pad_token_id = 2048
         do_sample = True
-        batch_size, cur_len = decoder_input_ids.shape
+        _, cur_len = decoder_input_ids.shape
 
         # We're at step 12 now, the sampling
         # This is actually where the loop should start
@@ -851,7 +856,7 @@ class NakedMusicGen(torch.nn.Module):
 
             # Decode the tokens
             lm_logits, next_cache = self.decoder(
-                decoder_input_values, encoder_hidden_states, attention_mask, past_key_values
+                decoder_input_values, encoder_hidden_states, attention_mask, past_key_values, use_cache
             )
 
             next_token_logits = lm_logits[:, -1, :].clone()
@@ -889,8 +894,7 @@ class NakedMusicGen(torch.nn.Module):
 
             decoder_input_ids = torch.cat([decoder_input_ids, next_tokens[:, None]], dim=-1)
 
-            # TODO: Fix the pastekey values
-            # past_key_values = next_cache.clone()
+            past_key_values = next_cache
 
             cur_len += 1
 
@@ -905,21 +909,23 @@ class NakedMusicGen(torch.nn.Module):
 
         output_ids = output_ids[None, ...]
 
+        if audio_scales is None:
+            audio_scales = [None] * batch_size
+
         #TODO: Impl the audio encoder for the decoding phase, also figure out where audio_scales come from
+        codec_outputs_left = self.audio_encoder.decode(output_ids[:, :, ::2, :], audio_scales=audio_scales)
+        output_values_left = codec_outputs_left.audio_values
 
-        # codec_outputs_left = self.audio_encoder.decode(output_ids[:, :, ::2, :], audio_scales=audio_scales)
-        # output_values_left = codec_outputs_left.audio_values
+        codec_outputs_right = self.audio_encoder.decode(output_ids[:, :, 1::2, :], audio_scales=audio_scales)
+        output_values_right = codec_outputs_right.audio_values
 
-        # codec_outputs_right = self.audio_encoder.decode(output_ids[:, :, 1::2, :], audio_scales=audio_scales)
-        # output_values_right = codec_outputs_right.audio_values
+        output_values = torch.cat([output_values_left, output_values_right], dim=1)
 
-        # output_values = torch.cat([output_values_left, output_values_right], dim=1)
-
-        return output_ids
+        return output_values
 
 if __name__ == "__main__":
     use_onnx = False
-    test = True
+    test = False
     folder = 'musicgen-stereo-small'
     os.makedirs(folder, exist_ok=True)
     # Undress the selected model
@@ -938,25 +944,38 @@ if __name__ == "__main__":
 
     naked_model = NakedMusicGen(
         model.text_encoder, 
+        model.audio_encoder,
         model.enc_to_dec_proj, 
         naked_decoder
     )
 
     naked_model.eval()
+    device = 'cpu'#'cuda:0'
+    model.to(device)
 
     max_length = 256 #This will be variable later
     outputs = processor.tokenizer(["80s pop track with bassy drums and synth"])
     input_ids, attention_mask = torch.tensor(outputs['input_ids']), torch.tensor(outputs['attention_mask'])
 
+    sampling_rate = model.config.audio_encoder.sampling_rate
+
+    del model
+    del processor
+
     if test:
         output = naked_model(
-            input_ids,
-            attention_mask,
-            torch.tensor(256, dtype=torch.int64),
-            torch.tensor(8, dtype=torch.int64),
-            torch.tensor(2048, dtype=torch.int64)
+            input_ids.to(device),
+            attention_mask.to(device),
+            torch.tensor(256, dtype=torch.int64).to(device),
+            torch.tensor(8, dtype=torch.int64).to(device),
+            torch.tensor(2048, dtype=torch.int64).to(device)
         )
         print(output.size())
+
+        import scipy
+
+        scipy.io.wavfile.write("test.wav", rate=sampling_rate, data=output[0].detach().numpy().T)
+
         exit()
 
     if use_onnx:

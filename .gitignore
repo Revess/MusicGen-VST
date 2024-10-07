@@ -1,8 +1,10 @@
 build
 bin
+*.onnx
 .vscode
 musicgen-stereo
 quantized_musicgen
 musicgen_fixed 
 musicgen-small
 musicgen-stereo-small
+__pycache__

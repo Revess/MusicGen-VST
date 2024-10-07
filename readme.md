@@ -17,3 +17,5 @@ meson setup build
 meson compile -C build
 sudo meson install -C build
 ```
+
+```jupyterlab-markup```
