@@ -292,5 +292,5 @@
     "vocab_size": 32128
   },
   "torch_dtype": "float16",
-  "transformers_version": "4.44.2"
+  "transformers_version": "4.41.2"
 }
