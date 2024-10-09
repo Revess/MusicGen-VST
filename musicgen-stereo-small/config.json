@@ -174,7 +174,7 @@
     "torchscript": false,
     "typical_p": 1.0,
     "use_bfloat16": false,
-    "use_cache": false,
+    "use_cache": true,
     "vocab_size": 2048
   },
   "is_encoder_decoder": true,
@@ -292,5 +292,5 @@
     "vocab_size": 32128
   },
   "torch_dtype": "float16",
-  "transformers_version": "4.44.2"
+  "transformers_version": "4.41.2"
 }
