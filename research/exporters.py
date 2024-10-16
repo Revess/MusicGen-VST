@@ -60,16 +60,13 @@ def export_sampler(sample: Sample, folder: str):
     dynamic_axes = {
         'decoder_input_ids': {0: 'batch_size', 1: 'sequence_length'},
         'attention_mask': {0: 'batch_size', 1: 'sequence_length'},
-        'encoder_hidden_states': {0: 'batch_size', 1: 'sequence_length'},
-        'delay_pattern_mask': {0: 'batch_size', 1: 'sequence_length'},
-        'decoder_input_ids': {0: 'batch_size', 1: 'sequence_length'},
+        'encoder_hidden_states': {0: 'batch_size', 1: 'sequence_length'}
     }
 
     # Example input shapes (with batch size = 2, sequence length = 10)
     dummy_decoder_input_ids = torch.randint(0, 100, (8, 1), dtype=torch.int64)
     dummy_attention_mask = torch.randint(0, 100, (2, 18), dtype=torch.int64)
     dummy_encoder_hidden_states = torch.randn((2, 18, 768), dtype=torch.float32)
-    dummy_delay_pattern_mask = torch.randint(0, 100, (8, 260), dtype=torch.int64)
     dummy_cfg = torch.tensor(3, dtype=torch.int64)
     dummy_temperature = torch.tensor(0.7, dtype=torch.float32)
     dummy_topk = torch.tensor(500, dtype=torch.int64)
@@ -82,7 +79,6 @@ def export_sampler(sample: Sample, folder: str):
             dummy_decoder_input_ids, 
             dummy_attention_mask, 
             dummy_encoder_hidden_states, 
-            dummy_delay_pattern_mask, 
             dummy_cfg, 
             dummy_temperature, 
             dummy_topk, 
@@ -93,13 +89,12 @@ def export_sampler(sample: Sample, folder: str):
             'decoder_input_ids', 
             'attention_mask', 
             'encoder_hidden_states', 
-            'delay_pattern_mask', 
             'cfg', 
             'temperature', 
             'topk', 
             'topp',
         ],
-        output_names=['decoder_input_ids', 'encoder_hidden_states'],
+        output_names=['next_token_logits', 'encoder_hidden_states'],
         dynamic_axes=dynamic_axes,
         opset_version=17
     )
@@ -110,24 +105,19 @@ def export_audio_decoder(audio_decoder_wrapper: DecodeAudioWrapper, folder: str)
 
     # Define the dynamic axes for variable-length input shapes
     dynamic_axes = {
-        'output_ids': {1: 'sequence_length'}, # Allow variable batch size and sequence length
-        'decoder_delay_pattern_mask': {1: 'sequence_length'}  # Output will also have variable batch size and sequence length
+        'output_ids': {3: 'sequence_length'}, # Allow variable batch size and sequence length
     }
 
     # Example input shapes (with batch size = 2, sequence length = 10)
-    dummy_output_ids = torch.randint(0, 100, (8, 257), dtype=torch.int64)
-    dummy_decoder_delay_pattern_mask = torch.randint(0, 100, (8, 257), dtype=torch.int64)
-    dummy_pad_token_id = torch.tensor([2048], dtype=torch.int64)
+    dummy_output_ids = torch.randint(0, 100, (1, 1, 8, 256), dtype=torch.int64)
 
     # Export the model to ONNX format
     torch.onnx.export(
         audio_decoder_wrapper,
-        (dummy_output_ids, dummy_decoder_delay_pattern_mask, dummy_pad_token_id),
+        (dummy_output_ids,),
         f"{folder}/audio_token_decoder.onnx", 
         input_names=[
             'output_ids',
-            'decoder_delay_pattern_mask',
-            'pad_token_id'
         ],
         output_names=['output_values'],
         dynamic_axes=dynamic_axes,

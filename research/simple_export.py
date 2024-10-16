@@ -8,6 +8,58 @@ import inspect
 from models import *
 from exporters import *
 
+def softmax(x, axis=-1):
+    exp_x = np.exp(x - np.max(x, axis=axis, keepdims=True))  # Subtract max for numerical stability
+    return exp_x / np.sum(exp_x, axis=axis, keepdims=True)
+
+def multinomial(probs, num_samples=1):
+    # Create an empty array to hold sampled tokens
+    batch_size, seq_len, vocab_size = probs.shape
+    sampled_tokens = np.zeros((batch_size, seq_len), dtype=np.int32)
+    
+    for i in range(batch_size):
+        for j in range(seq_len):
+            # Use np.random.choice to sample from the vocabulary based on probabilities
+            sampled_tokens[i, j] = np.random.multinomial(p=probs[i, j, :]).squeeze()
+    
+    return sampled_tokens
+
+def logits_warp(logits, temperature, top_k, top_p):
+    if temperature > 0.0:
+        logits = logits / temperature
+
+    # Top K sampling
+    top_k_indices = np.argsort(logits)[:,:,-top_k:]
+    top_k_probs = np.take_along_axis(logits, top_k_indices, axis=-1)
+
+    # Softmax
+    top_k_probs = softmax(top_k_probs, axis=-1)
+
+    # Top
+    sorted_indices = np.argsort(top_k_probs, axis=-1)[..., ::-1]
+    sorted_probs = np.take_along_axis(top_k_probs, sorted_indices, axis=-1)
+
+    # Top p 
+    if top_p < 1.0:
+        sorted_indices = np.argsort(top_k_probs, axis=-1)[..., ::-1]
+        sorted_probs = np.take_along_axis(top_k_probs, sorted_indices, axis=-1)
+
+        cumulative_probs = np.cumsum(sorted_probs, axis=-1)
+
+        sorted_indices_to_keep = cumulative_probs <= (1 - top_p)
+        sorted_indices_to_keep[..., 0] = True
+        filtered_probs = np.where(sorted_indices_to_keep, sorted_probs, 0)
+        filtered_probs = softmax(filtered_probs, axis=-1) # Chaning this to a different sampling could fix my life.
+        top_k_probs = filtered_probs
+
+    # Sample
+    return np.array([[top_k_indices[i, : , sorted_indices[i, :, np.random.multinomial(1, codebook, size=(1,)).argmax()]]] for i, codebook in enumerate(top_k_probs.squeeze())]).squeeze()[:, None]
+
+def apply_mask(ids, decoder_pattern_mask):
+    seq_len = ids.shape[-1]
+    decoder_pattern_mask = decoder_pattern_mask[..., :seq_len]
+    return np.where(decoder_pattern_mask == -1, ids, decoder_pattern_mask)
+
 def test_onnx(
         folder: str, 
         inputs: dict,
@@ -48,35 +100,44 @@ def test_onnx(
     ort_session = ort.InferenceSession(f"{folder}/sampler.onnx")
     ort_session.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
 
+    ort_inputs = {
+        'decoder_input_ids': decoder_input_ids, 
+        'attention_mask': attention_mask.astype(np.int64), 
+        'encoder_hidden_states.1': encoded, 
+        'cfg': np.array([cfg], dtype=np.int64), 
+        # 'temperature': np.array([temperature], dtype=np.float32), 
+        # 'topk': np.array([top_k], dtype=np.int64), 
+        # 'topp': np.array([top_p], dtype=np.float32)
+    }
+
     for i in range(max_len-1):
         print(i, end='\r')
+        ort_inputs['decoder_input_ids'] = apply_mask(ort_inputs['decoder_input_ids'], decoder_delay_pattern_mask)
         # Run the model
-        ort_inputs = {
-            'decoder_input_ids.1': decoder_input_ids, 
-            'attention_mask': attention_mask.astype(np.int64), 
-            'encoder_hidden_states.1': encoded, 
-            'delay_pattern_mask': decoder_delay_pattern_mask, 
-            'cfg': np.array([cfg], dtype=np.int64), 
-            'temperature': np.array([temperature], dtype=np.float32), 
-            'topk': np.array([top_k], dtype=np.int64), 
-            'topp': np.array([top_p], dtype=np.float32)
-        }
+        logits, _ = ort_session.run(None, ort_inputs)
+        logits = logits[:, None]
+        outputs = logits_warp(logits, temperature, top_k, top_p)
+        ort_inputs['decoder_input_ids'] = np.concatenate((ort_inputs['decoder_input_ids'], outputs), axis=-1)
 
-        decoder_input_ids, _ = ort_session.run(None, ort_inputs)
+    output_ids = apply_mask(ort_inputs['decoder_input_ids'], decoder_delay_pattern_mask)
+    output_ids = output_ids[output_ids != 2048].reshape(
+        1, 8, -1
+    )
+
+    # append the frame dimension back to the audio codes
+    output_ids = output_ids[None, ...]
 
     ort_session = ort.InferenceSession(f"{folder}/audio_token_decoder.onnx")
     ort_session.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
 
     # Run the model
     ort_inputs = {
-        'output_ids': decoder_input_ids, # We either need to remove the first tokens or add tokens to the decoder delay_pattern mask, check og for inspo
-        'decoder_delay_pattern_mask': decoder_delay_pattern_mask,
-        'pad_token_id': np.array([2048], dtype=np.int64)
+        'output_ids': output_ids # We either need to remove the first tokens or add tokens to the decoder delay_pattern mask, check og for inspo
     }
 
     output_values = ort_session.run(None, ort_inputs)[0]
 
-    scipy.io.wavfile.write("onnx_res.wav", rate=sampling_rate, data=output_values[0].detach().numpy().T)
+    scipy.io.wavfile.write("onnx_res.wav", rate=sampling_rate, data=output_values[0].T)
 
 def export_onnx(
         folder,
@@ -130,15 +191,15 @@ def test_torch(
     scipy.io.wavfile.write("torch_output.wav", rate=sampling_rate, data=output_values[0].detach().numpy().T)
 
 def main(
-        export_onnx_ = False,
-        test_onnx_ = False,
+        export_onnx_ = True,
+        test_onnx_ = True,
         test_torch_script = False,
         do_model_sample = False,
         sampling_rate = 32000,
-        cfg = 5,
+        cfg = 3,
         temperature = 0.7,
-        top_k = 500,
-        top_p = 0.0,
+        top_k = 250,
+        top_p = 1.0,
         max_len = 256,
         folder = './musicgen-stereo-small'
     ):
@@ -205,4 +266,4 @@ def main(
         )
 
 if __name__ == "__main__":
-    fire.Fire()
+    fire.Fire(main)

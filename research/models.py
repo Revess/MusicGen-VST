@@ -26,7 +26,7 @@ class PreLoop(nn.Module):
         self.num_codebooks = num_codebooks
         self.audio_channels = audio_channels
 
-    def triu_onnx(x, diagonal=0):
+    def triu_onnx(self, x, diagonal=0):
         '''Taken from: https://github.com/fxmarty/optimum/blob/9482591505517da087f3dff180d59abeffec1655/optimum/exporters/onnx/model_patcher.py#L801'''
         l, w = x.shape
         arange_rows = torch.arange(l, device=x.device)
@@ -68,7 +68,7 @@ class PreLoop(nn.Module):
                 input_ids_shifted[:, 2 * codebook + 1, codebook : seq_len + codebook] = input_ids[:, 2 * codebook + 1]
         # construct a pattern mask that indicates the positions of padding tokens for each codebook
         # first fill the upper triangular part (the EOS padding)
-        delay_pattern = triu_onnx(
+        delay_pattern = self.triu_onnx(
             torch.ones((channel_codebooks, max_length), dtype=torch.int32), diagonal=max_length - channel_codebooks + 1
         ).to(torch.int64)
         # then fill the lower triangular part (the BOS padding)
@@ -182,7 +182,6 @@ class Sample(nn.Module):
             decoder_input_ids, 
             attention_mask, # <- Is encoder attention_mask
             encoder_hidden_states, 
-            delay_pattern_mask, 
             cfg = torch.tensor(3),
             temperature = torch.tensor(0.7), 
             topk = torch.tensor(500), 
@@ -190,13 +189,11 @@ class Sample(nn.Module):
         ):
 
         # Input prep
-        model_inputs = self.apply_delay_pattern_mask(decoder_input_ids, delay_pattern_mask)
-
         if cfg is not None:
             cfg_tensor = cfg.unsqueeze(0)  # Convert to tensor for ONNX
             condition = (cfg_tensor > 1).int()  # Create a condition tensor
             if condition:
-                model_inputs = (condition * model_inputs).repeat((2,1))
+                model_inputs = (condition * decoder_input_ids).repeat((2,1))
                 # if attention_mask is not None: # This is only for decoder_attention_mask (gets when given audio)
                 #     model_input_attention_mask = (condition * attention_mask).repeat((2,1))
         
@@ -241,6 +238,7 @@ class Sample(nn.Module):
             next_token_scores = self.logits_process(next_token_logits, cfg)
         else:
             next_token_scores = next_token_logits
+        return next_token_scores, encoder_hidden_states
 
         next_token_scores = self.logits_warp(next_token_scores, temperature, topk, topp)
 
@@ -264,21 +262,21 @@ class DecodeAudioWrapper(nn.Module):
         input_ids = torch.where(decoder_pad_token_mask == -1, input_ids, decoder_pad_token_mask)
         return input_ids
 
-    def forward(self, output_ids: torch.Tensor, decoder_delay_pattern_mask: torch.Tensor, pad_token_id: int):
+    def forward(self, output_ids: torch.Tensor):
         '''Taken from last section of the model'''
 
         batch_size = 1 # We will only allow sampling of single samples for now, otherwise it might be too slow
 
         # apply the pattern mask to the final ids
-        output_ids = self.apply_delay_pattern_mask(output_ids, decoder_delay_pattern_mask)
+        # output_ids = self.apply_delay_pattern_mask(output_ids, decoder_delay_pattern_mask)
 
         # revert the pattern delay mask by filtering the pad token id
-        output_ids = output_ids[output_ids != pad_token_id].reshape(
-            batch_size, 8, -1
-        )
+        # output_ids = output_ids[output_ids != pad_token_id].reshape(
+        #     batch_size, 8, -1
+        # )
 
         # append the frame dimension back to the audio codes
-        output_ids = output_ids[None, ...]
+        # output_ids = output_ids[None, ...]
 
         audio_scales = [None] * batch_size
 

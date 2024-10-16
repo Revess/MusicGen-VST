@@ -4,6 +4,13 @@
 
 ```git clone https://github.com/DISTRHO/DPF.git```
 
+Build onnx modules
+```sudo apt-get install build-essential libprotobuf-dev protobuf-compiler git cmake```
+```git clone https://github.com/microsoft/onnxruntime.git```
+```cd onnxruntime```
+```./build.sh --config Release --build_shared_lib --parallel```
+```sudo ./build.sh --build_shared_lib --parallel --install```
+
 ```git submodule update --init --recursive```
 
 
@@ -19,3 +26,5 @@ sudo meson install -C build
 ```
 
 ```jupyterlab-markup```
+
+g++ -I/usr/local/include/onnxruntime -L/usr/local/lib -lonnxruntime
