@@ -28,3 +28,13 @@ sudo meson install -C build
 ```jupyterlab-markup```
 
 g++ -I/usr/local/include/onnxruntime -L/usr/local/lib -lonnxruntime
+
+
+```https://github.com/nlohmann/json```
+
+```https://github.com/google/sentencepiece/tree/v0.2.0/src```
+
+
+Exports for Linux (Check for Windows another time)
+```export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./src/onnxruntime```
+```export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./src/sentencepiece```

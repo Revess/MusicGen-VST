@@ -1,19 +1,20 @@
 # Compiler and flags
 CXX = g++
-CXXFLAGS = -I./onnxruntime/include -std=c++17
-LDFLAGS = -L./onnxruntime/lib -lonnxruntime
+CXXFLAGS = -I./include/onnxruntime -I./include/nlohmann -I./include/sentencepiece -std=c++17
+LDFLAGS = -L./src/onnxruntime -lonnxruntime -L./src/sentencepiece -lsentencepiece
+RPATH_FLAGS = -Wl,-rpath,'$$ORIGIN/../src'
 
 # Target executable
-TARGET = onnx_inference
+TARGET = test_model
 
 # Source files
-SRC = model_cpp_test.cpp
+SRC = model_cpp_test.cpp ./src/tokenizer.cpp
 
 # Build target
 all: $(TARGET)
 
 $(TARGET): $(SRC)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SRC) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SRC) $(LDFLAGS) $(RPATH_FLAGS)
 
 # Clean the build
 clean:
