@@ -9,3 +9,5 @@ musicgen-small
 musicgen-stereo-small
 __pycache__
 node_modules
+.vst
+.vst3
