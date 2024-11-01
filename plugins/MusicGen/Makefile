@@ -6,8 +6,8 @@
 # Modified by REIS0
 
 VST2 ?= true
-LV2 ?= true
-STANDALONE ?= true
+LV2 ?= false
+STANDALONE ?= false
 
 # --------------------------------------------------------------
 # Project name, used for binaries
