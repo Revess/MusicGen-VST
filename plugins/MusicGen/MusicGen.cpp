@@ -53,4 +53,11 @@ void MusicGen::run(
 
 }
 
+
+
+Plugin *createPlugin()
+{
+    return new MusicGen();
+}
+
 END_NAMESPACE_DISTRHO

@@ -7,8 +7,6 @@
 
 #include "MusicGen.hpp"
 
-#include <random>
-
 START_NAMESPACE_DISTRHO
 
 const unsigned int UI_W = 1000;

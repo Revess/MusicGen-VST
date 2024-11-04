@@ -5,8 +5,6 @@ START_NAMESPACE_DISTRHO
 MusicGenUI::MusicGenUI() : UI(UI_W, UI_H)
 {
     plugin = static_cast<MusicGen *>(getPluginInstancePointer());
-    random.seed();
-
 }
 
 MusicGenUI::~MusicGenUI()
