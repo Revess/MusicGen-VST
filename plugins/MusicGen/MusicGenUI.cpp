@@ -2,9 +2,17 @@
 
 START_NAMESPACE_DISTRHO
 
-MusicGenUI::MusicGenUI() : UI(UI_W, UI_H)
+MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
+                           generateButton(this, this)
 {
     plugin = static_cast<MusicGen *>(getPluginInstancePointer());
+
+    float width = getWidth();
+    float height = getHeight();
+
+    generateButton.setAbsolutePos((width / 2) - (150 / 2), (height / 2) - (75 / 2));
+    generateButton.setLabel("Generate");
+    generateButton.setSize(150, 75);
 }
 
 MusicGenUI::~MusicGenUI()
@@ -24,7 +32,14 @@ void MusicGenUI::stateChanged(const char *key, const char *value)
 
 void MusicGenUI::onNanoDisplay()
 {
+    float width = getWidth();
+    float height = getHeight();
 
+    beginPath();
+    fillColor(Color(255, 255, 255));
+    rect(0.0f, 0.0f, width, height);
+    fill();
+    closePath();
 }
 
 void MusicGenUI::uiScaleFactorChanged(const double scaleFactor)
@@ -32,5 +47,9 @@ void MusicGenUI::uiScaleFactorChanged(const double scaleFactor)
 
 }
 
+void MusicGenUI::buttonClicked(SubWidget* const widget, int)
+{
+
+}
 
 END_NAMESPACE_DISTRHO

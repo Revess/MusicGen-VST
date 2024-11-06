@@ -3,6 +3,8 @@
 
 #include "DistrhoPlugin.hpp"
 
+#include "DistrhoPluginInfo.h"
+
 START_NAMESPACE_DISTRHO
 
 // -----------------------------------------------------------------------------------------------------------
@@ -17,15 +19,16 @@ public:
     ~MusicGen();
 
 protected:
-    const char* getLabel() const override { return "MusicGen VST"; }
+    const char* getLabel() const noexcept override { return "MusicGen VST"; }
     const char* getDescription() const override{ return "VST Impl of MusicGen"; }
-    const char* getMaker() const override { return "Thunderboom Records"; }
+    const char* getMaker() const noexcept override { return "Thunderboom Records"; }
     const char* getHomePage() const override { return "https://github.com/ThunderboomRecords"; }
-    const char* getLicense() const override { return "GPL V3"; }
-    uint32_t getVersion() const override { return d_version(1, 0, 0); }
-    int64_t getUniqueId() const override { return d_cconst('d', 'b', 'x', 't'); }
+    const char* getLicense() const noexcept override { return "GPL V3"; }
+    uint32_t getVersion() const noexcept override { return d_version(1, 0, 0); }
+    int64_t getUniqueId() const noexcept override { return d_cconst('t', 'b', 'W', 'S'); }
 
     void initParameter(uint32_t index, Parameter &parameter) override;
+    void initAudioPort(bool input, uint32_t index, AudioPort& port) override;
     void setState(const char *key, const char *value) override;
     String getState(const char *key) const override;
     void initState(unsigned int, String &, String &) override;

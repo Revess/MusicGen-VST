@@ -4,16 +4,24 @@ START_NAMESPACE_DISTRHO
 
 MusicGen::MusicGen() : Plugin(0,0,0) 
 {
-
 }
 
-MusicGen::~MusicGen() {
+MusicGen::~MusicGen() { 
 
 }
 
 void MusicGen::initParameter(uint32_t index, Parameter &parameter)
 {
 
+}
+
+void MusicGen::initAudioPort(bool input, uint32_t index, AudioPort& port)
+{
+    // treat meter audio ports as stereo
+    port.groupId = kPortGroupStereo;
+
+    // everything else is as default
+    Plugin::initAudioPort(input, index, port);
 }
 
 float MusicGen::getParameterValue(uint32_t index) const 
