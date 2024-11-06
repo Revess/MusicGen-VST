@@ -2,17 +2,22 @@
 
 START_NAMESPACE_DISTRHO
 
-MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
-                           generateButton(this, this)
+MusicGenUI::MusicGenUI() : UI(UI_W, UI_H)
 {
     plugin = static_cast<MusicGen *>(getPluginInstancePointer());
 
     float width = getWidth();
     float height = getHeight();
 
-    generateButton.setAbsolutePos((width / 2) - (150 / 2), (height / 2) - (75 / 2));
-    generateButton.setLabel("Generate");
-    generateButton.setSize(150, 75);
+    generateButton = new Button(this);
+    generateButton->setLabel("Generate");
+    generateButton->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
+    generateButton->resizeToFit();
+    generateButton->setCallback(this);
+
+    // generateButton.setAbsolutePos((width / 2) - (150 / 2), (height / 2) - (75 / 2));
+    // generateButton.setLabel("Generate");
+    // generateButton.setSize(150, 75);
 }
 
 MusicGenUI::~MusicGenUI()
@@ -47,7 +52,7 @@ void MusicGenUI::uiScaleFactorChanged(const double scaleFactor)
 
 }
 
-void MusicGenUI::buttonClicked(SubWidget* const widget, int)
+void MusicGenUI::buttonClicked(Button *button)
 {
 
 }

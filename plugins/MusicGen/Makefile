@@ -10,7 +10,8 @@ FILES_DSP = \
 
 FILES_UI  = \
 	MusicGenUI.cpp \
-	./src/NanoButton.cpp
+	./src/SimpleButton.cpp \
+	./src/WAIVEWidget.cpp 
 
 # --------------------------------------------------------------
 # Do some magic

@@ -8,7 +8,7 @@
 
 #include "MusicGen.hpp"
 
-#include "./src/NanoButton.hpp"
+#include "./src/SimpleButton.hpp"
 
 START_NAMESPACE_DISTRHO
 
@@ -16,7 +16,7 @@ const unsigned int UI_W = 1000;
 const unsigned int UI_H = 582;
 
 class MusicGenUI : public UI,
-                   DGL::Button::ButtonEventHandler::Callback
+                   DGL::Button::Callback
 {
 public:
     MusicGenUI();
@@ -30,12 +30,12 @@ protected:
     void uiScaleFactorChanged(const double scaleFactor) override;
 
     // Callback handler
-    void buttonClicked(SubWidget* const widget, int) override;
+    void buttonClicked(Button *button) override;
 
 private:
     MusicGen *plugin;
 
-    DGL::Button generateButton;
+    DGL::Button *generateButton;
 
     DISTRHO_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MusicGenUI);
 };
