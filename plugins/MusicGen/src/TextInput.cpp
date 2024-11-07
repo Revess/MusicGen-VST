@@ -44,7 +44,7 @@ void TextInput::onNanoDisplay()
 
     beginPath();
     fillColor(background_color);
-    rect(0, 0, width, height);
+    roundedRect(0, 0, width, height, height * 0.25f);
     fill();
     closePath();
 
@@ -53,7 +53,7 @@ void TextInput::onNanoDisplay()
         beginPath();
         strokeColor(accent_color);
         strokeWidth(1);
-        rect(1, 1, width - 2, height - 2);
+        roundedRect(1, 1, width - 2, height - 2, (height-12) * 0.25f);
         stroke();
         closePath();
     }
@@ -120,8 +120,8 @@ void TextInput::onNanoDisplay()
     else
         x = bounds.getX();
     strokeColor(text_color);
-    moveTo(x, 0);
-    lineTo(x, height);
+    moveTo(x, 4);
+    lineTo(x, height - 4);
     stroke();
     closePath();
 }

@@ -1,6 +1,7 @@
 #!/usr/bin/make -f
 
 NAME = MusicGenVST
+CXXFLAGS += -std=c++17
 
 # --------------------------------------------------------------
 # Files to build
@@ -11,7 +12,15 @@ FILES_DSP = \
 FILES_UI  = \
 	MusicGenUI.cpp \
 	./src/SimpleButton.cpp \
-	./src/WAIVEWidget.cpp 
+	./src/Knob.cpp \
+	./src/TextInput.cpp \
+	./src/Panel.cpp \
+	./src/Label.cpp \
+	./src/Checkbox.cpp \
+	./src/ValueIndicator.cpp \
+	./src/WidgetGroup.cpp \
+	./src/Layout.cpp \
+	./src/WAIVEWidget.cpp  
 
 # --------------------------------------------------------------
 # Do some magic

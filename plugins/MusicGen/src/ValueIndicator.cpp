@@ -4,17 +4,17 @@ START_NAMESPACE_DISTRHO
 
 using DGL_NAMESPACE::Color;
 
-ValueIndicator::ValueIndicator(Widget *parent) noexcept
-    : WAIVEWidget(parent),
-      fFormat("%.2f"),
-      fValue(0.0f)
-{
+std::string floatToString(float value) {
+    std::ostringstream out;
+    out << std::fixed << std::setprecision(2) << value;
+    return out.str();
 }
 
-void ValueIndicator::setFormatString(std::string fmt)
+
+ValueIndicator::ValueIndicator(Widget *parent) noexcept
+    : WAIVEWidget(parent),
+      fValue(0.0f)
 {
-    fFormat = fmt;
-    repaint();
 }
 
 void ValueIndicator::setValue(float val)
@@ -25,8 +25,7 @@ void ValueIndicator::setValue(float val)
 
 void ValueIndicator::onNanoDisplay()
 {
-    std::string textString = fmt::format(fFormat, fValue);
-    // std::cout << fFormat << " " << fValue << " -> " << textString << std::endl;
+    std::string textString = floatToString(fValue);
 
     const float width = getWidth();
     const float height = getHeight();
@@ -42,7 +41,7 @@ void ValueIndicator::onNanoDisplay()
     textAlign(Align::ALIGN_CENTER | Align::ALIGN_MIDDLE);
     fontSize(getFontSize());
     fontFaceId(font);
-    text(width / 2, height / 2, textString.c_str(), nullptr);
+    text(width / 2, height / 2, textString.c_str(), NULL);
     closePath();
 }
 
