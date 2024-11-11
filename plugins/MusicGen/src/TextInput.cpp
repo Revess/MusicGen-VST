@@ -27,6 +27,11 @@ void TextInput::setText(const char *newText, bool sendCallback)
     repaint();
 }
 
+std::string TextInput::getText()
+{
+    return textValue;
+}
+
 void TextInput::undo()
 {
     // In case the text is invalid by reciever of callback,

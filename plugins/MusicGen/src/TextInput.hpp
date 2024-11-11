@@ -21,6 +21,7 @@ public:
 
     void setCallback(Callback *cb);
     void setText(const char *text, bool sendCallback = false);
+    std::string getText();
     void undo();
 
     std::string placeholder;

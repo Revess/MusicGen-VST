@@ -1,12 +1,20 @@
 #ifndef MUSICGEN_UI_HPP
 #define MUSICGEN_UI_HPP
 #include <string>
+#include <iostream>
+#include <ctime>
+#include <curl/curl.h>
+#include <json/json.h>
+#include <fstream>
+#include <filesystem>
+#include <cstdlib>
+#include <vector>
+#include <chrono>
 
 #include "DistrhoUI.hpp"
 #include "NanoVG.hpp"
 #include "Window.hpp"
 #include "Color.hpp"
-#include "SourceList.hpp"
 
 #include "MusicGen.hpp"
 
@@ -22,7 +30,7 @@
 START_NAMESPACE_DISTRHO
 
 const unsigned int UI_W = 1500;
-const unsigned int UI_H = 760;
+const unsigned int UI_H = 750;
 
 class MusicGenUI : public UI,
                    DGL::Button::Callback,
@@ -51,6 +59,11 @@ protected:
     void textInputChanged(TextInput *textInput, std::string text) override;
 
     void checkboxUpdated(Checkbox *checkbox, bool value) override;
+
+    void addSampleToPanel(float padding, std::string name);
+
+    // Handle mouse events
+    bool onScroll(const ScrollEvent &ev) override;
 
 private:
     MusicGen *plugin;
@@ -93,9 +106,23 @@ private:
 
     DGL::Button *generateButton;
 
-    Panel *samplesList;
+    Panel *samplesListPanel;
+    Panel *samplesListInner;
+    Panel *scrollBar;
+
+    std::vector<Panel*> samplePanels;
+    std::vector<Button*> sampleButtons;
+    std::vector<Button*> samplesRemove;
+
+    std::string userid = "undefined";
+
+    std::string playBtn = "▶";
 
     double fScaleFactor;
+    float fScale;
+    int yOffset = 0;
+    int scrollBarHeight = 0;
+    std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
 
     DISTRHO_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MusicGenUI);
 };

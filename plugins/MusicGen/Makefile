@@ -2,6 +2,7 @@
 
 NAME = MusicGenVST
 CXXFLAGS += -std=c++17
+LDFLAGS += -L/usr/local/lib -lcurl  -ljsoncpp
 
 # --------------------------------------------------------------
 # Files to build
