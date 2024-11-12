@@ -1,8 +1,13 @@
 #include "MusicGenUI.hpp"
 
+
 // TODO :
-// Add check toggle to switch between the localhost version and the web version
 // Add a drag and drop (or import button) for melody generation.
+// Clean the files after each gen.
+// Some small pop ups for the user like:
+    // Error no local server found
+    // Error no remote server found
+// Test localhost toggle with python code.
 
 std::string getCurrentDateTime() {
     // Get the current time
@@ -56,6 +61,25 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             promptPanel = new Panel(this);
             promptPanel->setSize(generatePanel->getWidth(), (generatePanel->getHeight() * 0.9) - (padding * 2.0), true);
             promptPanel->onTop(generatePanel, CENTER, START, padding);
+        }
+
+        {
+            localOnlineSwitch = new Checkbox(this);
+            localOnlineSwitch->setSize(25, 25, true);
+            localOnlineSwitch->background_color = WaiveColors::text;
+            localOnlineSwitch->foreground_color = WaiveColors::text;
+            localOnlineSwitch->setChecked(false, false);
+            localOnlineSwitch->onTop(promptPanel, END, START, padding);
+            localOnlineSwitch->setCallback(this);
+
+            localOnlineSwitchLabel = new Label(this, "Use local server");
+            localOnlineSwitchLabel->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
+            localOnlineSwitchLabel->setFontSize(fontsize);
+            localOnlineSwitchLabel->text_color = WaiveColors::text;
+            localOnlineSwitchLabel->resizeToFit();
+            localOnlineSwitchLabel->leftOf(localOnlineSwitch, CENTER, padding);
+            localOnlineSwitch->hide();
+            localOnlineSwitchLabel->hide();
         }
 
         // Now add input box for prompt
@@ -197,7 +221,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
 
             nSamplesKnob = new Knob(this);
             nSamplesKnob->setName("Samples");
-            nSamplesKnob->max = 12;
+            nSamplesKnob->max = 10;
             nSamplesKnob->min = 1;
             nSamplesKnob->label = "Samples";
             nSamplesKnob->setFontSize(fontsize);
@@ -219,7 +243,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
         // Advanced Options
         {
             advancedSettingsPanel = new Panel(this);
-            advancedSettingsPanel->setSize(promptPanel->getWidth() - (padding * 2), 100, true);
+            advancedSettingsPanel->setSize(promptPanel->getWidth() - (padding), 100, true);
             advancedSettingsPanel->below(genLengthPanel, CENTER, padding);
             
             advancedSettings = new Checkbox(this);
@@ -247,6 +271,25 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
                 generateButton->resizeToFit();
                 generateButton->onTop(advancedSettingsPanel, END, CENTER, padding);
                 generateButton->setCallback(this);
+            }
+
+            // Sample prompt Button
+            {
+                importButton = new Button(this);
+                importButton->setLabel("Import Sample");
+                importButton->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
+                importButton->setFontSize(fontsize);
+                importButton->resizeToFit();
+                importButton->leftOf(generateButton, CENTER, padding);
+                importButton->setCallback(this);
+
+                loadedFile = new Label(this, "");
+                loadedFile->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
+                loadedFile->setFontSize(fontsize * 0.9);
+                loadedFile->text_color = WaiveColors::text;
+                loadedFile->resizeToFit();
+                loadedFile->above(importButton, START, padding);
+                loadedFile->hide();
             }
         }
 
@@ -367,23 +410,30 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             samplesListPanel->setSize((width * 0.5f * 0.5f) - padding, (height * 0.5f) - (padding * 2.0), true);
             samplesListPanel->setAbsolutePos(generatePanel->getWidth() + (padding * 2.0), padding);
 
+            openFolderButton = new Button(this);
+            openFolderButton->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
+            openFolderButton->setLabel("Open Generate Folder");
+            openFolderButton->setFontSize(fontsize);
+            openFolderButton->resizeToFit();
+            openFolderButton->onTop(samplesListPanel, CENTER, END, padding);
+
             samplesListInner = new Panel(this);
-            samplesListInner->setSize((width * 0.5f * 0.5f) - (padding * 2), (height * 0.5f) - (padding * 4.0), true);
-            samplesListInner->onTop(samplesListPanel, CENTER, CENTER, padding);
+            samplesListInner->setSize((width * 0.5f * 0.5f) - (padding * 2), ((27 * fScaleFactor)*10 + padding*11), true);
+            samplesListInner->onTop(samplesListPanel, CENTER, START, padding);
             samplesListInner->background_color = WaiveColors::dark;
 
-            scrollBar = new Panel(this);
-            scrollBar->setSize((padding * 2), samplesListInner->getHeight() - (padding * 2), true);
-            scrollBar->onTop(samplesListInner, END, CENTER, 0);
-            scrollBar->background_color = WaiveColors::light1;
-            scrollBarHeight = scrollBar->getHeight();
+            // scrollBar = new Panel(this);
+            // scrollBar->setSize((padding * 2), samplesListInner->getHeight() - (padding * 2), true);
+            // scrollBar->onTop(samplesListInner, END, CENTER, 0);
+            // scrollBar->background_color = WaiveColors::light1;
+            // scrollBarHeight = scrollBar->getHeight();
 
             // Loop over it change the positioning to take into account the scroll top etc.
-            for(int i = 0; i < 15; i++) {
+            for(int i = 0; i < 10; i++) {
                 addSampleToPanel(padding, std::string("test"));
-                if(samplePanels.size() > 12){
-                    scrollBar->setSize((padding * 2), round(static_cast<float>(scrollBarHeight) * ((12.0) / static_cast<float>(samplePanels.size()))), true);
-                }
+                // if(samplePanels.size() > 12){
+                //     scrollBar->setSize((padding * 2), round(static_cast<float>(scrollBarHeight) * ((12.0) / static_cast<float>(samplePanels.size()))), true);
+                // }
             }
 
             // sampleButtons
@@ -454,12 +504,13 @@ void MusicGenUI::buttonClicked(Button *button)
     // Start making the request
     if(button == generateButton){
         // Make if else statment here to update the IP to localhost if in offline mode.
-        if(true){
-            std::string ip = "http://82.217.111.120/";
+        std::string ip = "";
+        if(!localOnlineSwitch->getChecked()){
+            ip = "http://82.217.111.120/";
         } else {
-            std::string ip = "http://127.0.0.1:43500/";
+            ip = "http://127.0.0.1:55000/";
         }
-
+        std::cout << ip << std::endl;
 
         float duration = genLengthKnob->getValue();
         float temperature = temperatureKnob->getValue();
@@ -487,7 +538,8 @@ void MusicGenUI::buttonClicked(Button *button)
         if(curl) {
             std::string readBuffer;
             // Set the URL for the POST request
-            curl_easy_setopt(curl, CURLOPT_URL, "http://82.217.111.120/");
+            curl_easy_setopt(curl, CURLOPT_URL, ip.c_str());
+
             
             // Set the POST fields
             std::string postFields = "";
@@ -541,11 +593,16 @@ void MusicGenUI::buttonClicked(Button *button)
        
         // Download the files into the generated folder   
         if(curl) {
+            for(int i = 0; i < samplePanels.size(); i++){
+                samplePanels[i]->hide();
+                sampleButtons[i]->hide();
+            }
             std::string readBuffer;
             const Json::Value downloadLinks = jsonData["download_links"];
             int i = 0;
             for (const auto &link : downloadLinks) {
-                const std::string url = std::string("http://82.217.111.120") + link.asString();
+                const std::string url = std::string(ip) + link.asString();
+                std::cout << url << std::endl;
                 std::string datetime = getCurrentDateTime() + std::string("_") + std::to_string(i) + std::string(".wav");
                 std::filesystem::path outputFilename = std::filesystem::path(homeDir) / "Documents" / "MusicGenVST" / "generated" / datetime;
 
@@ -558,8 +615,6 @@ void MusicGenUI::buttonClicked(Button *button)
                 }
 
                 curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-                curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallbackStream);
-                curl_easy_setopt(curl, CURLOPT_WRITEDATA, &outFile);
 
                 res = curl_easy_perform(curl);
                 if (res != CURLE_OK)
@@ -575,20 +630,10 @@ void MusicGenUI::buttonClicked(Button *button)
 
                 std::cout << datetime << std::endl;
 
-                addSampleToPanel(padding, datetime);
+                samplePanels[i]->show();
+                sampleButtons[i]->setLabel(datetime);
+                sampleButtons[i]->show();
 
-                if(samplePanels.size() > 12){
-                    scrollBar->setAbsoluteY(samplesListInner->getAbsoluteY() + padding); // Reset to the top
-                    scrollBar->setSize((padding * 2), round(static_cast<float>(scrollBarHeight) * ((12.0) / static_cast<float>(samplePanels.size()))), true);
-                    int j = 0;
-                    while(true){
-                        j++;
-                        if(!samplesListPanel[j].isVisible()){ // From the top of the list get the visible items
-                            break;
-                        }
-                    }
-                    scrollBar->setAbsoluteY(samplesListInner->getAbsoluteY() + padding + round(( - 12) * ((12.0) / static_cast<float>(samplePanels.size())))); // Reset to the top
-                }
                 i++;
             }
         }
@@ -675,6 +720,9 @@ void MusicGenUI::checkboxUpdated(Checkbox *checkbox, bool value)
             CFGPanel->show();
             CFGKnob->show();
             CFGLabel->show();
+
+            localOnlineSwitch->show();
+            localOnlineSwitchLabel->show();
         } else {
             promptPanel->setSize(generatePanel->getWidth() - (padding * 2.0), (generatePanel->getHeight() * 0.4) - (padding * 2.0), true);
             controlsPanel->setSize(promptPanel->getWidth(), (generatePanel->getHeight() * 0.6f) - padding, true);
@@ -699,6 +747,15 @@ void MusicGenUI::checkboxUpdated(Checkbox *checkbox, bool value)
             CFGPanel->hide();
             CFGKnob->hide();
             CFGLabel->hide();
+
+            localOnlineSwitch->hide();
+            localOnlineSwitchLabel->hide();
+        }
+    } else if(checkbox == localOnlineSwitch){
+        if(value == true){
+
+        } else {
+
         }
     }
     repaint();
@@ -714,7 +771,8 @@ bool MusicGenUI::onScroll(const ScrollEvent &ev)
         mouseX >= samplesListInner->getAbsoluteX() && 
         mouseX <= (samplesListInner->getAbsoluteX() + samplesListInner->getWidth()) &&
         mouseY >= samplesListInner->getAbsoluteY() && 
-        mouseY <= (samplesListInner->getAbsoluteY() + samplesListInner->getHeight())
+        mouseY <= (samplesListInner->getAbsoluteY() + samplesListInner->getHeight()) &&
+        1 == 0
     )
     {
         if(samplePanels[0]->getAbsoluteY() == samplesListInner->getAbsoluteY() - padding){
@@ -759,8 +817,9 @@ bool MusicGenUI::onScroll(const ScrollEvent &ev)
 
 void MusicGenUI::addSampleToPanel(float padding, std::string name)
 {
+    int h = 27;
     samplePanels.push_back(new Panel(this));
-    samplePanels.back()->setSize((samplesListInner->getWidth() * 0.5) - (padding * 2), 25);
+    samplePanels.back()->setSize((samplesListInner->getWidth() * 0.5) - (padding), h);
     samplePanels.back()->background_color = WaiveColors::grey2;
     if(samplePanels.size() == 1){
         samplePanels.back()->onTop(samplesListInner, START, START, padding);
@@ -769,17 +828,21 @@ void MusicGenUI::addSampleToPanel(float padding, std::string name)
         samplePanels.back()->below(samplePanels[samplePanels.size()-2], CENTER, padding);
     }
     sampleButtons.push_back(new Button(this));
-    sampleButtons.back()->setSize((samplePanels.back()->getWidth() * 0.5) * 0.75, 25);
+    sampleButtons.back()->setSize((samplePanels.back()->getWidth() * 0.5), h);
     sampleButtons.back()->setLabel(name);
     sampleButtons.back()->textAlign(Align::ALIGN_LEFT); // Fix in the header of the button to change the text alignment
     sampleButtons.back()->background_color = WaiveColors::grey2;
     sampleButtons.back()->onTop(samplePanels.back(), START, START, 0);
+    sampleButtons.back()->setCallback(this);
 
-    samplesRemove.push_back(new Button(this));
-    samplesRemove.back()->setSize((samplePanels.back()->getWidth() * 0.5) * 0.25, 25);
-    samplesRemove.back()->setLabel("⌫");
-    samplesRemove.back()->background_color = WaiveColors::grey2;
-    samplesRemove.back()->onTop(samplePanels.back(), END, END, 0);
+    samplePanels.back()->hide();
+    sampleButtons.back()->hide();
+
+    // samplesRemove.push_back(new Button(this));
+    // samplesRemove.back()->setSize((samplePanels.back()->getWidth() * 0.5) * 0.25, 25);
+    // samplesRemove.back()->setLabel("⌫");
+    // samplesRemove.back()->background_color = WaiveColors::grey2;
+    // samplesRemove.back()->onTop(samplePanels.back(), END, END, 0);
 }
 
 END_NAMESPACE_DISTRHO

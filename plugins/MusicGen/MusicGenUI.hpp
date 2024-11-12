@@ -68,6 +68,9 @@ protected:
 private:
     MusicGen *plugin;
 
+    Checkbox *localOnlineSwitch;
+    Label *localOnlineSwitchLabel;
+
     Panel *generatePanel;
     Panel *promptPanel;
     Panel *controlsPanel;
@@ -104,7 +107,10 @@ private:
     Knob *CFGKnob;
     ValueIndicator *CFGLabel;
 
-    DGL::Button *generateButton;
+    Button *generateButton;
+    Button *openFolderButton;
+    Button *importButton;
+    Label *loadedFile;
 
     Panel *samplesListPanel;
     Panel *samplesListInner;
