@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <vector>
 #include <chrono>
+#include <cstdlib>
 
 #include "DistrhoUI.hpp"
 #include "NanoVG.hpp"
@@ -26,6 +27,7 @@
 #include "./src/Label.hpp"
 #include "./src/ValueIndicator.hpp"
 #include "./src/Checkbox.hpp"
+#include "tinyfiledialogs.h"
 
 START_NAMESPACE_DISTRHO
 

@@ -40,12 +40,14 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
 
     plugin = static_cast<MusicGen *>(getPluginInstancePointer());
 
+    fScaleFactor = 2.0f;
+
     float width = UI_W * fScaleFactor;
     float height = UI_H * fScaleFactor;
 
     float padding = 4.f * fScaleFactor;
 
-    float fontsize = 8.f * fScaleFactor;
+    float fontsize = 12.f * fScaleFactor;
 
     // Main input panel
     int promptPanelHeight = 0;
@@ -175,7 +177,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             genLengthKnob->min = 0.4;
             genLengthKnob->label = "Length";
             genLengthKnob->setFontSize(fontsize);
-            genLengthKnob->setRadius(20.f);
+            genLengthKnob->setRadius(20.f * fScaleFactor);
             genLengthKnob->gauge_width = 3.0f * fScaleFactor;
             genLengthKnob->setValue(8);
             genLengthKnob->resizeToFit();
@@ -185,6 +187,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             genLengthLabel = new ValueIndicator(this);
             genLengthLabel->setSize(70, 20);
             genLengthLabel->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
+            genLengthLabel->setFontSize(fontsize);
             genLengthLabel->above(genLengthKnob, CENTER, padding);
             genLengthLabel->setValue(genLengthKnob->getValue());
         }
@@ -200,7 +203,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             temperatureKnob->min = 0.0;
             temperatureKnob->label = "Temperature";
             temperatureKnob->setFontSize(fontsize);
-            temperatureKnob->setRadius(20.f);
+            temperatureKnob->setRadius(20.f * fScaleFactor);
             temperatureKnob->gauge_width = 3.0f * fScaleFactor;
             temperatureKnob->setValue(0.7);
             temperatureKnob->resizeToFit();
@@ -210,6 +213,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             temperatureLabel = new ValueIndicator(this);
             temperatureLabel->setSize(70, 20);
             temperatureLabel->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
+            temperatureLabel->setFontSize(fontsize);
             temperatureLabel->above(temperatureKnob, CENTER, padding);
             temperatureLabel->setValue(temperatureKnob->getValue());
         }
@@ -225,7 +229,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             nSamplesKnob->min = 1;
             nSamplesKnob->label = "Samples";
             nSamplesKnob->setFontSize(fontsize);
-            nSamplesKnob->setRadius(20.f);
+            nSamplesKnob->setRadius(20.f * fScaleFactor);
             nSamplesKnob->integer = true;
             nSamplesKnob->gauge_width = 3.0f * fScaleFactor;
             nSamplesKnob->setValue(1);
@@ -236,6 +240,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             nSamplesLabel = new ValueIndicator(this);
             nSamplesLabel->setSize(70, 20);
             nSamplesLabel->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
+            nSamplesLabel->setFontSize(fontsize);
             nSamplesLabel->above(nSamplesKnob, CENTER, padding);
             nSamplesLabel->setValue(nSamplesKnob->getValue());
         }
@@ -309,7 +314,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             topPKnob->min = 0.0;
             topPKnob->label = "Top P";
             topPKnob->setFontSize(fontsize);
-            topPKnob->setRadius(20.f);
+            topPKnob->setRadius(20.f * fScaleFactor);
             topPKnob->gauge_width = 3.0f * fScaleFactor;
             topPKnob->setValue(0.0);
             topPKnob->resizeToFit();
@@ -319,7 +324,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             topPLabel = new ValueIndicator(this);
             topPLabel->setSize(70, 20);
             topPLabel->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
-            topPLabel->background_color = WaiveColors::grey2;
+            topPLabel->setFontSize(fontsize);
             topPLabel->above(topPKnob, CENTER, padding);
             topPLabel->setValue(topPKnob->getValue());
 
@@ -343,7 +348,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             topKKnob->integer = true;
             topKKnob->label = "Top K";
             topKKnob->setFontSize(fontsize);
-            topKKnob->setRadius(20.f);
+            topKKnob->setRadius(20.f * fScaleFactor);
             topKKnob->gauge_width = 3.0f * fScaleFactor;
             topKKnob->setValue(500);
             topKKnob->resizeToFit();
@@ -353,7 +358,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             topKLabel = new ValueIndicator(this);
             topKLabel->setSize(70, 20);
             topKLabel->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
-            topKLabel->background_color = WaiveColors::grey2;
+            topKLabel->setFontSize(fontsize);
             topKLabel->above(topKKnob, CENTER, padding);
             topKLabel->setValue(topKKnob->getValue());
 
@@ -376,7 +381,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             CFGKnob->min = 1;
             CFGKnob->label = "CFG";
             CFGKnob->setFontSize(fontsize);
-            CFGKnob->setRadius(20.f);
+            CFGKnob->setRadius(20.f * fScaleFactor);
             CFGKnob->integer = true;
             CFGKnob->gauge_width = 3.0f * fScaleFactor;
             CFGKnob->setValue(5);
@@ -387,7 +392,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             CFGLabel = new ValueIndicator(this);
             CFGLabel->setSize(70, 20);
             CFGLabel->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
-            CFGLabel->background_color = WaiveColors::grey2;
+            CFGLabel->setFontSize(fontsize);
             CFGLabel->above(CFGKnob, CENTER, padding);
             CFGLabel->setValue(CFGKnob->getValue());
 
@@ -602,7 +607,6 @@ void MusicGenUI::buttonClicked(Button *button)
             int i = 0;
             for (const auto &link : downloadLinks) {
                 const std::string url = std::string(ip) + link.asString();
-                std::cout << url << std::endl;
                 std::string datetime = getCurrentDateTime() + std::string("_") + std::to_string(i) + std::string(".wav");
                 std::filesystem::path outputFilename = std::filesystem::path(homeDir) / "Documents" / "MusicGenVST" / "generated" / datetime;
 
@@ -628,8 +632,6 @@ void MusicGenUI::buttonClicked(Button *button)
 
                 float padding = 4.f * fScaleFactor;
 
-                std::cout << datetime << std::endl;
-
                 samplePanels[i]->show();
                 sampleButtons[i]->setLabel(datetime);
                 sampleButtons[i]->show();
@@ -641,6 +643,36 @@ void MusicGenUI::buttonClicked(Button *button)
         repaint();
     
         // Update the UI samples on the right side.
+    } else if(button == importButton) {
+        const char* filters[] = { "*.wav" };
+        const char* filePath = tinyfd_openFileDialog(
+            "Select a File",    // Title of the dialog
+            "",                 // Default path
+            1,                  // Number of filters
+            filters,            // File filters
+            "WAV Files",        // Filter description
+            0                   // Do not allow multiple selections
+        );
+
+        if (filePath) {
+            std::cout << "Selected file: " << filePath << std::endl;
+        } else {
+            std::cout << "No file selected." << std::endl;
+        }
+
+    } else if(button == openFolderButton) {
+        #ifdef _WIN32
+            // Windows
+            std::system("explorer .");
+        #elif __APPLE__
+            // macOS
+            std::system("open .");
+        #elif __linux__
+            // Linux
+            std::system("xdg-open .");
+        #else
+            std::cerr << "Unsupported operating system." << std::endl;
+        #endif
     }
 }
 
@@ -817,9 +849,9 @@ bool MusicGenUI::onScroll(const ScrollEvent &ev)
 
 void MusicGenUI::addSampleToPanel(float padding, std::string name)
 {
-    int h = 27;
+    int h = 27 * fScaleFactor;
     samplePanels.push_back(new Panel(this));
-    samplePanels.back()->setSize((samplesListInner->getWidth() * 0.5) - (padding), h);
+    samplePanels.back()->setSize((samplesListInner->getWidth() * 0.5f * fScaleFactor) - (padding * 2), h);
     samplePanels.back()->background_color = WaiveColors::grey2;
     if(samplePanels.size() == 1){
         samplePanels.back()->onTop(samplesListInner, START, START, padding);
@@ -828,7 +860,7 @@ void MusicGenUI::addSampleToPanel(float padding, std::string name)
         samplePanels.back()->below(samplePanels[samplePanels.size()-2], CENTER, padding);
     }
     sampleButtons.push_back(new Button(this));
-    sampleButtons.back()->setSize((samplePanels.back()->getWidth() * 0.5), h);
+    sampleButtons.back()->setSize((samplePanels.back()->getWidth() * 0.5 * fScaleFactor), h);
     sampleButtons.back()->setLabel(name);
     sampleButtons.back()->textAlign(Align::ALIGN_LEFT); // Fix in the header of the button to change the text alignment
     sampleButtons.back()->background_color = WaiveColors::grey2;

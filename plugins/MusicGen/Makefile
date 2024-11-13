@@ -2,7 +2,20 @@
 
 NAME = MusicGenVST
 CXXFLAGS += -std=c++17
-LDFLAGS += -L/usr/local/lib -lcurl  -ljsoncpp
+
+UNAME_S := $(shell uname -s)
+
+ifeq ($(UNAME_S), Linux)
+    CXXFLAGS += -I/usr/include/jsoncpp -DLINUX
+    LDFLAGS += -lcurl -ljsoncpp
+endif
+
+ifeq ($(UNAME_S), Darwin)
+    CXXFLAGS += -I/usr/local/include/jsoncpp -DDARWIN
+    LDFLAGS += -lcurl -ljsoncpp
+endif
+ifeq ($(OS), Windows_NT)
+endif
 
 # --------------------------------------------------------------
 # Files to build
@@ -21,7 +34,8 @@ FILES_UI  = \
 	./src/ValueIndicator.cpp \
 	./src/WidgetGroup.cpp \
 	./src/Layout.cpp \
-	./src/WAIVEWidget.cpp  
+	./src/WAIVEWidget.cpp \
+	tinyfiledialogs.c
 
 # --------------------------------------------------------------
 # Do some magic

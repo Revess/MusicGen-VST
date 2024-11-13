@@ -19,3 +19,6 @@ sudo meson install -C build
 ```
 
 ```jupyterlab-markup```
+
+## Linux make setup
+```sudo apt-get install libcurl4-openssl-dev libjsoncpp-dev```
