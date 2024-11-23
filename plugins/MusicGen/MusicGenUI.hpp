@@ -28,11 +28,12 @@
 #include "./src/ValueIndicator.hpp"
 #include "./src/Checkbox.hpp"
 #include "tinyfiledialogs.h"
+#include "PluginParams.h"
 
 START_NAMESPACE_DISTRHO
 
 const unsigned int UI_W = 1500;
-const unsigned int UI_H = 750;
+const unsigned int UI_H = 800;
 
 class MusicGenUI : public UI,
                    DGL::Button::Callback,
@@ -112,6 +113,7 @@ private:
     Button *generateButton;
     Button *openFolderButton;
     Button *importButton;
+    Button *clearImportedSample;
     Label *loadedFile;
 
     Panel *samplesListPanel;
@@ -130,6 +132,7 @@ private:
     float fScale;
     int yOffset = 0;
     int scrollBarHeight = 0;
+    std::string selectedFile = "";
     std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
 
     DISTRHO_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MusicGenUI);

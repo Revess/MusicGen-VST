@@ -1,9 +1,14 @@
 #ifndef MUSICGEN_HPP
 #define MUSICGEN_HPP
 
-#include "DistrhoPlugin.hpp"
+#include <string>
+#include <sndfile.h>
+#include <iostream>
+#include <vector>
 
 #include "DistrhoPluginInfo.h"
+#include "DistrhoPlugin.hpp"
+#include "PluginParams.h"
 
 START_NAMESPACE_DISTRHO
 
@@ -39,9 +44,14 @@ protected:
 
     // --- Process ----------------
     void run(const float **, float **outputs, uint32_t numFrames, const MidiEvent *midiEvents, uint32_t midiEventCount) override;
+    void readFile(std::string selectedFile);
 
 private:
     friend class MusicGenUI;
+    bool startOfFile = false;
+    std::string readFilePath = "";
+    std::vector<float> buffer;
+    size_t bufferPosition;
 };
 
 END_NAMESPACE_DISTRHO

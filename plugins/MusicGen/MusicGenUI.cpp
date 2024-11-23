@@ -2,12 +2,13 @@
 
 
 // TODO :
-// Add a drag and drop (or import button) for melody generation.
-// Clean the files after each gen.
+// Fix problem with audiocraft not working on Mac, rewrite app code so it uses the transformers version.
+// Test localhost toggle with python code.
+// Add a loading screen.
+
 // Some small pop ups for the user like:
     // Error no local server found
     // Error no remote server found
-// Test localhost toggle with python code.
 
 std::string getCurrentDateTime() {
     // Get the current time
@@ -40,14 +41,14 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
 
     plugin = static_cast<MusicGen *>(getPluginInstancePointer());
 
-    fScaleFactor = 2.0f;
+    // fScaleFactor = 2.0f;
 
     float width = UI_W * fScaleFactor;
     float height = UI_H * fScaleFactor;
 
     float padding = 4.f * fScaleFactor;
 
-    float fontsize = 12.f * fScaleFactor;
+    float fontsize = 8.f * fScaleFactor;
 
     // Main input panel
     int promptPanelHeight = 0;
@@ -146,14 +147,46 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             // promptInstrumentationLabel->rightOf(promptTempoLabel, START, padding);
         }
 
+        {
+            importButton = new Button(this);
+            importButton->setLabel("Import Sample");
+            importButton->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
+            importButton->setFontSize(fontsize);
+            importButton->resizeToFit();
+            importButton->below(promptTempo, CENTER, padding);
+            importButton->setCallback(this);
+        }
+
+        {
+            clearImportedSample = new Button(this);
+            clearImportedSample->setLabel("Clear Sample");
+            clearImportedSample->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
+            clearImportedSample->setFontSize(fontsize);
+            clearImportedSample->resizeToFit();
+            clearImportedSample->below(promptInstrumentation, CENTER, padding);
+            clearImportedSample->setCallback(this);
+
+            {
+                loadedFile = new Label(this, "This is the test loc of the load filepath");
+                loadedFile->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
+                loadedFile->setFontSize(fontsize * 0.9);
+                loadedFile->text_color = WaiveColors::text;
+                loadedFile->resizeToFit();
+                loadedFile->below(importButton, START, padding);
+            }
+        }
+
         promptPanelHeight += promptInstrumentation->getHeight();
         promptPanelHeight += promptInstrumentationLabel->getHeight();
         promptPanelHeight += promptTempo->getHeight();
         promptPanelHeight += promptTempoLabel->getHeight();
         promptPanelHeight += textPrompt->getHeight();
         promptPanelHeight += textPromptLabel->getHeight();
+        promptPanelHeight += clearImportedSample->getHeight();
+        promptPanelHeight += loadedFile->getHeight();
+        loadedFile->hide();
 
-        promptPanel->setSize(generatePanel->getWidth() - (padding * 2.0), promptPanelHeight  - (padding * 2.0), true);
+        promptPanel->setSize(generatePanel->getWidth() - (padding * 2.0), promptPanelHeight  + (padding * 1.0), true);
 
         // Control panel
         {
@@ -164,7 +197,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
 
         // Now add knobs
         int knobW = 200;
-        int knobH = 200;
+        int knobH = 125;
         // Length
         {
             genLengthPanel = new Panel(this);
@@ -177,8 +210,8 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             genLengthKnob->min = 0.4;
             genLengthKnob->label = "Length";
             genLengthKnob->setFontSize(fontsize);
-            genLengthKnob->setRadius(20.f * fScaleFactor);
-            genLengthKnob->gauge_width = 3.0f * fScaleFactor;
+            genLengthKnob->setRadius(10.f * fScaleFactor);
+            genLengthKnob->gauge_width = 2.0f * fScaleFactor;
             genLengthKnob->setValue(8);
             genLengthKnob->resizeToFit();
             genLengthKnob->onTop(genLengthPanel, CENTER, CENTER, padding);
@@ -203,7 +236,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             temperatureKnob->min = 0.0;
             temperatureKnob->label = "Temperature";
             temperatureKnob->setFontSize(fontsize);
-            temperatureKnob->setRadius(20.f * fScaleFactor);
+            temperatureKnob->setRadius(10.f * fScaleFactor);
             temperatureKnob->gauge_width = 3.0f * fScaleFactor;
             temperatureKnob->setValue(0.7);
             temperatureKnob->resizeToFit();
@@ -229,7 +262,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             nSamplesKnob->min = 1;
             nSamplesKnob->label = "Samples";
             nSamplesKnob->setFontSize(fontsize);
-            nSamplesKnob->setRadius(20.f * fScaleFactor);
+            nSamplesKnob->setRadius(10.f * fScaleFactor);
             nSamplesKnob->integer = true;
             nSamplesKnob->gauge_width = 3.0f * fScaleFactor;
             nSamplesKnob->setValue(1);
@@ -279,23 +312,6 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             }
 
             // Sample prompt Button
-            {
-                importButton = new Button(this);
-                importButton->setLabel("Import Sample");
-                importButton->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
-                importButton->setFontSize(fontsize);
-                importButton->resizeToFit();
-                importButton->leftOf(generateButton, CENTER, padding);
-                importButton->setCallback(this);
-
-                loadedFile = new Label(this, "");
-                loadedFile->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
-                loadedFile->setFontSize(fontsize * 0.9);
-                loadedFile->text_color = WaiveColors::text;
-                loadedFile->resizeToFit();
-                loadedFile->above(importButton, START, padding);
-                loadedFile->hide();
-            }
         }
 
         controltPanelHeight += advancedSettingsPanel->getHeight();
@@ -306,7 +322,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
         {
             topPPanel = new Panel(this);
             topPPanel->setSize(knobW, knobH, true);
-            topPPanel->below(advancedSettingsPanel, CENTER, padding);
+            topPPanel->below(advancedSettingsPanel, CENTER, padding*4);
 
             topPKnob = new Knob(this);
             topPKnob->setName("Top P");
@@ -314,7 +330,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             topPKnob->min = 0.0;
             topPKnob->label = "Top P";
             topPKnob->setFontSize(fontsize);
-            topPKnob->setRadius(20.f * fScaleFactor);
+            topPKnob->setRadius(10.f * fScaleFactor);
             topPKnob->gauge_width = 3.0f * fScaleFactor;
             topPKnob->setValue(0.0);
             topPKnob->resizeToFit();
@@ -348,7 +364,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             topKKnob->integer = true;
             topKKnob->label = "Top K";
             topKKnob->setFontSize(fontsize);
-            topKKnob->setRadius(20.f * fScaleFactor);
+            topKKnob->setRadius(10.f * fScaleFactor);
             topKKnob->gauge_width = 3.0f * fScaleFactor;
             topKKnob->setValue(500);
             topKKnob->resizeToFit();
@@ -381,7 +397,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             CFGKnob->min = 1;
             CFGKnob->label = "CFG";
             CFGKnob->setFontSize(fontsize);
-            CFGKnob->setRadius(20.f * fScaleFactor);
+            CFGKnob->setRadius(10.f * fScaleFactor);
             CFGKnob->integer = true;
             CFGKnob->gauge_width = 3.0f * fScaleFactor;
             CFGKnob->setValue(5);
@@ -421,6 +437,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             openFolderButton->setFontSize(fontsize);
             openFolderButton->resizeToFit();
             openFolderButton->onTop(samplesListPanel, CENTER, END, padding);
+            openFolderButton->setCallback(this);
 
             samplesListInner = new Panel(this);
             samplesListInner->setSize((width * 0.5f * 0.5f) - (padding * 2), ((27 * fScaleFactor)*10 + padding*11), true);
@@ -508,6 +525,7 @@ void MusicGenUI::buttonClicked(Button *button)
 {
     // Start making the request
     if(button == generateButton){
+        // TODO: add way for audio prompt
         // Make if else statment here to update the IP to localhost if in offline mode.
         std::string ip = "";
         if(!localOnlineSwitch->getChecked()){
@@ -515,7 +533,6 @@ void MusicGenUI::buttonClicked(Button *button)
         } else {
             ip = "http://127.0.0.1:55000/";
         }
-        std::cout << ip << std::endl;
 
         float duration = genLengthKnob->getValue();
         float temperature = temperatureKnob->getValue();
@@ -528,7 +545,6 @@ void MusicGenUI::buttonClicked(Button *button)
         prompt.append(promptTempo->getText());
         prompt.append(" ");
         prompt.append(promptInstrumentation->getText());
-        std::cout << prompt << std::endl;
 
         // Make a request
         CURL *curl;
@@ -542,34 +558,80 @@ void MusicGenUI::buttonClicked(Button *button)
         // Do a generate request
         if(curl) {
             std::string readBuffer;
-            // Set the URL for the POST request
+
+            // Prepare curl form data
+            struct curl_httppost* form = NULL;
+            struct curl_httppost* last = NULL;
+
+            // Add the audio file
+            if(selectedFile.size() > 0){
+                curl_formadd(&form, &last,
+                        CURLFORM_COPYNAME, "audioInput",
+                        CURLFORM_FILE, selectedFile.c_str(),
+                        CURLFORM_CONTENTTYPE, "audio/wav",
+                        CURLFORM_END);
+            }
+            
+            // Add other form data
+            curl_formadd(&form, &last,
+                        CURLFORM_COPYNAME, "prompt",
+                        CURLFORM_COPYCONTENTS, prompt.c_str(),
+                        CURLFORM_END);
+
+            curl_formadd(&form, &last,
+                        CURLFORM_COPYNAME, "userid",
+                        CURLFORM_COPYCONTENTS, userid.c_str(),
+                        CURLFORM_END);
+
+            curl_formadd(&form, &last,
+                        CURLFORM_COPYNAME, "Temperature",
+                        CURLFORM_COPYCONTENTS, std::to_string(temperature).c_str(),
+                        CURLFORM_END);
+
+            curl_formadd(&form, &last,
+                        CURLFORM_COPYNAME, "Top K",
+                        CURLFORM_COPYCONTENTS, std::to_string(topk).c_str(),
+                        CURLFORM_END);
+
+            curl_formadd(&form, &last,
+                        CURLFORM_COPYNAME, "Top P",
+                        CURLFORM_COPYCONTENTS, std::to_string(topp).c_str(),
+                        CURLFORM_END);
+
+            curl_formadd(&form, &last,
+                        CURLFORM_COPYNAME, "Samples",
+                        CURLFORM_COPYCONTENTS, std::to_string(samples).c_str(),
+                        CURLFORM_END);
+
+            curl_formadd(&form, &last,
+                        CURLFORM_COPYNAME, "Classifier Free Guidance",
+                        CURLFORM_COPYCONTENTS, std::to_string(CFG).c_str(),
+                        CURLFORM_END);
+
+            curl_formadd(&form, &last,
+                        CURLFORM_COPYNAME, "Duration",
+                        CURLFORM_COPYCONTENTS, std::to_string(duration).c_str(),
+                        CURLFORM_END);
+
+            // Set URL and form data
             curl_easy_setopt(curl, CURLOPT_URL, ip.c_str());
+            curl_easy_setopt(curl, CURLOPT_HTTPPOST, form);
 
-            
-            // Set the POST fields
-            std::string postFields = "";
-            postFields += std::string("prompt=")                  + prompt                      + std::string("&");
-            postFields += std::string("userid=")                  + userid                      + std::string("&");
-            postFields += std::string("Temperature=")             + std::to_string(temperature) + std::string("&");
-            postFields += std::string("Top+K=")                   + std::to_string(topk)        + std::string("&");
-            postFields += std::string("Top+P=")                   + std::to_string(topp)        + std::string("&");
-            postFields += std::string("Samples=")                 + std::to_string(samples)     + std::string("&");
-            postFields += std::string("Classifier+Free+Guidance=") + std::to_string(CFG)         + std::string("&");
-            postFields += std::string("Duration=")                + std::to_string(duration);
-            
-            curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postFields.c_str());
-
+            // Set the write callback function
             curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
             curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
             // Perform the request and store the result
             res = curl_easy_perform(curl);
+            std::cout << "failed?" << std::endl;
             // Check for errors
             if(res != CURLE_OK) {
                 std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
             } else {
                 std::string errs;
                 std::istringstream ss(readBuffer);
+                std::cout << "failed?" << std::endl;
+                std::cout << "Raw Response: " << readBuffer << std::endl;
 
                 if (Json::parseFromStream(readerBuilder, ss, &jsonData, &errs)) {
                     // Access the values from the JSON response
@@ -592,6 +654,7 @@ void MusicGenUI::buttonClicked(Button *button)
 
             // Cleanup
             curl_easy_cleanup(curl);
+            curl_formfree(form);
         }
 
         const char* homeDir = std::getenv("HOME"); // Works on Unix-like systems
@@ -619,6 +682,9 @@ void MusicGenUI::buttonClicked(Button *button)
                 }
 
                 curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+                curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallbackStream);
+                curl_easy_setopt(curl, CURLOPT_WRITEDATA, &outFile);
+
 
                 res = curl_easy_perform(curl);
                 if (res != CURLE_OK)
@@ -656,23 +722,47 @@ void MusicGenUI::buttonClicked(Button *button)
 
         if (filePath) {
             std::cout << "Selected file: " << filePath << std::endl;
+            selectedFile = static_cast<std::string>(filePath);
+            loadedFile->setLabel(selectedFile);
+            loadedFile->resizeToFit();
+            loadedFile->show();
         } else {
             std::cout << "No file selected." << std::endl;
+            selectedFile = "";
         }
 
+    } else if(button == clearImportedSample) {
+        selectedFile = "";
+        loadedFile->hide();
     } else if(button == openFolderButton) {
         #ifdef _WIN32
             // Windows
             std::system("explorer .");
         #elif __APPLE__
             // macOS
-            std::system("open .");
+            std::system("open ~/Documents/MusicGenVST/generated");
+            std::cerr << "open ~/Documents/MusicGenVST/generated" << std::endl;
         #elif __linux__
             // Linux
-            std::system("xdg-open .");
+            std::system("xdg-open ~/Documents/MusicGenVST/generated");
         #else
             std::cerr << "Unsupported operating system." << std::endl;
         #endif
+    } else{
+        for(int i = 0; i < sampleButtons.size(); i++){
+            if (button == sampleButtons[i]){
+                const char* homeDir = std::getenv("HOME"); // Works on Unix-like systems
+                std::filesystem::path outputFilename = std::filesystem::path(homeDir) / "Documents" / "MusicGenVST" / "generated" / sampleButtons[i]->getLabel();
+                std::string selectedFile = static_cast<std::string>(outputFilename);
+                plugin->setParameterValue(0, -1.0f);
+                for(int i = 0; i < selectedFile.size(); i++){
+                    plugin->setParameterValue(0, static_cast<float>(selectedFile[i]));
+                    // std::cout << selectedFile[i] << std::endl;
+                }
+                plugin->setParameterValue(0, -2.0f);
+                break;
+            }
+        }   
     }
 }
 
@@ -849,9 +939,9 @@ bool MusicGenUI::onScroll(const ScrollEvent &ev)
 
 void MusicGenUI::addSampleToPanel(float padding, std::string name)
 {
-    int h = 27 * fScaleFactor;
+    int h = 27;
     samplePanels.push_back(new Panel(this));
-    samplePanels.back()->setSize((samplesListInner->getWidth() * 0.5f * fScaleFactor) - (padding * 2), h);
+    samplePanels.back()->setSize((samplesListInner->getWidth() * 0.5f) - (padding), h);
     samplePanels.back()->background_color = WaiveColors::grey2;
     if(samplePanels.size() == 1){
         samplePanels.back()->onTop(samplesListInner, START, START, padding);
@@ -860,7 +950,7 @@ void MusicGenUI::addSampleToPanel(float padding, std::string name)
         samplePanels.back()->below(samplePanels[samplePanels.size()-2], CENTER, padding);
     }
     sampleButtons.push_back(new Button(this));
-    sampleButtons.back()->setSize((samplePanels.back()->getWidth() * 0.5 * fScaleFactor), h);
+    sampleButtons.back()->setSize((samplePanels.back()->getWidth() * 0.5), h);
     sampleButtons.back()->setLabel(name);
     sampleButtons.back()->textAlign(Align::ALIGN_LEFT); // Fix in the header of the button to change the text alignment
     sampleButtons.back()->background_color = WaiveColors::grey2;

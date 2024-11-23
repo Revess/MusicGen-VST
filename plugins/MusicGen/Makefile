@@ -6,13 +6,13 @@ CXXFLAGS += -std=c++17
 UNAME_S := $(shell uname -s)
 
 ifeq ($(UNAME_S), Linux)
-    CXXFLAGS += -I/usr/include/jsoncpp -DLINUX
-    LDFLAGS += -lcurl -ljsoncpp
+    CXXFLAGS += -I/usr/include/jsoncpp -I/usr/include -I/opt/homebrew/include -DLINUX
+    LDFLAGS += -lcurl -ljsoncpp -lsndfile
 endif
 
 ifeq ($(UNAME_S), Darwin)
-    CXXFLAGS += -I/usr/local/include/jsoncpp -DDARWIN
-    LDFLAGS += -lcurl -ljsoncpp
+    CXXFLAGS += -I/usr/local/include/jsoncpp -I/usr/local/include -I/opt/homebrew/include -DDARWIN -arch arm64
+    LDFLAGS += -lcurl -ljsoncpp -lsndfile
 endif
 ifeq ($(OS), Windows_NT)
 endif

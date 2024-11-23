@@ -20,6 +20,11 @@ void Button::setLabel(const std::string &label_)
     repaint();
 }
 
+std::string Button::getLabel()
+{
+    return label;
+}
+
 void Button::resizeToFit()
 {
     if (label.length() == 0)

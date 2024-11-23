@@ -22,6 +22,7 @@ public:
     void setCallback(Callback *cb);
 
     void setLabel(const std::string &label);
+    std::string getLabel();
     void setEnabled(bool enabled);
     void setToggled(bool value, bool sendCallback = false);
     bool getToggled() const;
