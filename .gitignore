@@ -9,3 +9,6 @@ musicgen-small
 musicgen-stereo-small
 __pycache__
 ./plugins/MusicGen/app/app/
+release/*
+vst2/*
+vst3/*
