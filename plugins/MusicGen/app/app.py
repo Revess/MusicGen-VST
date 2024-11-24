@@ -13,7 +13,7 @@ if current_os == "Windows" or current_os == "Linux":
     device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
     # TODO: add calc for GPU mem
 elif current_os == "Darwin":
-    device = 'mps'
+    device = 'cpu' # Would love to use mps but there is a limit in the number of output channels on mps.
 
 AUDIO_FOLDER = os.path.join(Path.home(), 'audio')
 os.makedirs(AUDIO_FOLDER, exist_ok=True)
@@ -50,7 +50,7 @@ def generate_audio(prompt, temperature, topk, topp, cfg, samples, duration, drop
     for audio_file_path in audio_file_paths:
         wav = model_small.generate(
             **inputs, 
-            max_new_tokens=int(duration*50),
+            max_new_tokens=int(float(duration)*50),
             temperature=temperature,
             top_k=topk,
             top_p=topp,
@@ -84,7 +84,7 @@ def index():
                 topp = float(request.form.get('Top P'))
                 cfg = int(request.form.get('Classifier Free Guidance'))
                 samples = int(request.form.get('Samples'))
-                duration = int(request.form.get('Duration'))
+                duration = float(request.form.get('Duration'))
                 audio_file_paths = generate_audio(prompt, temperature, topk, topp, cfg, samples, duration, dropped=dropped, userid=userid)
                 audio_filenames = [os.path.basename(audio_file_path) for audio_file_path in audio_file_paths]
                 download_links = [f'/download/{userid}/{audio_filename}' for audio_filename in audio_filenames]

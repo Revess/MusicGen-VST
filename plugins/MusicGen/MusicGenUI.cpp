@@ -2,7 +2,6 @@
 
 
 // TODO :
-// Fix problem with audiocraft not working on Mac, rewrite app code so it uses the transformers version.
 // Test localhost toggle with python code.
 // Add a loading screen.
 
@@ -30,9 +29,10 @@ std::string getCurrentDateTime() {
 START_NAMESPACE_DISTRHO
 
 MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
-                           fScaleFactor(getScaleFactor()),
+                           fScaleFactor(2.0f),
                            fScale(1.0f)
 {
+    // getScaleFactor();
     const char* homeDir = std::getenv("HOME"); // Works on Unix-like systems
     std::filesystem::path documentsPath = std::filesystem::path(homeDir) / "Documents" / "MusicGenVST";
     std::filesystem::create_directory(documentsPath);
@@ -41,14 +41,18 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
 
     plugin = static_cast<MusicGen *>(getPluginInstancePointer());
 
-    // fScaleFactor = 2.0f;
-
     float width = UI_W * fScaleFactor;
     float height = UI_H * fScaleFactor;
 
     float padding = 4.f * fScaleFactor;
 
-    float fontsize = 8.f * fScaleFactor;
+    if(getScaleFactor() == 2){
+        fscaleMult = 1.0;
+    } else{
+        fscaleMult = 2.0;
+    }
+
+    float fontsize = 8.f * fScaleFactor * fscaleMult;
 
     // Main input panel
     int promptPanelHeight = 0;
@@ -462,6 +466,53 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             // samplesRemove
         }
     }
+
+    {
+        loaderPanel = new Panel(this);
+        loaderPanel->setSize((width * 0.5f) - (padding * 2.0), (height * 0.5f) - (padding * 2.0), true);
+        loaderPanel->setAbsolutePos(padding, padding);
+        loaderPanel->toFront();
+
+        static const Color bg_col(35, 35, 37, 0.5);
+        loaderPanel->background_color = bg_col;
+        loaderPanel->hide();
+
+        loaderSpinner = new Label(this, " ");
+        loaderSpinner->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
+        loaderSpinner->setFontSize(fontsize * 4.0f);
+        loaderSpinner->text_color = WaiveColors::text;
+        loaderSpinner->resizeToFit();
+        loaderSpinner->onTop(loaderPanel, CENTER, CENTER, padding);
+        loaderSpinner->hide();
+    }
+
+    {
+        popupPanel = new Panel(this);
+        popupPanel->setSize((width * 0.25f) - (padding * 2.0), (height * 0.25f) - (padding * 2.0), true);
+        popupPanel->onTop(loaderPanel, CENTER, CENTER, padding);
+        popupPanel->toFront();
+
+        static const Color bg_col(35, 35, 37, 0.5);
+        popupPanel->background_color = bg_col;
+        popupPanel->hide();
+
+        popupLabel = new Label(this, "Oke");
+        popupLabel->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
+        popupLabel->setFontSize(fontsize);
+        popupLabel->text_color = WaiveColors::text;
+        popupLabel->resizeToFit();
+        popupLabel->onTop(popupPanel, CENTER, CENTER, padding);
+        popupLabel->hide();
+
+        popupButton = new Button(this);
+        popupButton->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
+        popupButton->setLabel("Ok");
+        popupButton->setFontSize(fontsize);
+        popupButton->resizeToFit();
+        popupButton->below(popupLabel, CENTER, padding);
+        popupButton->setCallback(this);
+        popupButton->hide();
+    }
 }
 
 MusicGenUI::~MusicGenUI()
@@ -521,265 +572,330 @@ std::string getBasename(const std::string& url)
     return url.substr(lastSlash + 1);
 }
 
+void MusicGenUI::generateFn(std::atomic<bool>& done)
+{
+    // TODO: add way for audio prompt
+    // Make if else statment here to update the IP to localhost if in offline mode.
+    std::string ip = "";
+    if(!localOnlineSwitch->getChecked()){
+        ip = "http://82.217.111.120/";
+    } else {
+        ip = "http://127.0.0.1:55000/";
+    }
+
+    float duration = genLengthKnob->getValue();
+    float temperature = temperatureKnob->getValue();
+    float topp = topPKnob->getValue();
+    int samples = nSamplesKnob->getValue();
+    int topk = topKKnob->getValue();
+    int CFG = CFGKnob->getValue();
+    std::string prompt = textPrompt->getText();
+    prompt.append(" ");
+    prompt.append(promptTempo->getText());
+    prompt.append(" ");
+    prompt.append(promptInstrumentation->getText());
+
+    // Make a request
+    CURL *curl;
+    CURLcode res;
+    curl = curl_easy_init();
+
+    // Parse and print the response using a JSON library
+    Json::Value jsonData;
+    Json::CharReaderBuilder readerBuilder;
+
+    // Do a generate request
+    if(curl) {
+        std::string readBuffer;
+
+        // Prepare curl form data
+        struct curl_httppost* form = NULL;
+        struct curl_httppost* last = NULL;
+
+        // Add the audio file
+        if(selectedFile.size() > 0){
+            curl_formadd(&form, &last,
+                    CURLFORM_COPYNAME, "audioInput",
+                    CURLFORM_FILE, selectedFile.c_str(),
+                    CURLFORM_CONTENTTYPE, "audio/wav",
+                    CURLFORM_END);
+        }
+        
+        // Add other form data
+        curl_formadd(&form, &last,
+                    CURLFORM_COPYNAME, "prompt",
+                    CURLFORM_COPYCONTENTS, prompt.c_str(),
+                    CURLFORM_END);
+
+        curl_formadd(&form, &last,
+                    CURLFORM_COPYNAME, "userid",
+                    CURLFORM_COPYCONTENTS, userid.c_str(),
+                    CURLFORM_END);
+
+        curl_formadd(&form, &last,
+                    CURLFORM_COPYNAME, "Temperature",
+                    CURLFORM_COPYCONTENTS, std::to_string(temperature).c_str(),
+                    CURLFORM_END);
+
+        curl_formadd(&form, &last,
+                    CURLFORM_COPYNAME, "Top K",
+                    CURLFORM_COPYCONTENTS, std::to_string(topk).c_str(),
+                    CURLFORM_END);
+
+        curl_formadd(&form, &last,
+                    CURLFORM_COPYNAME, "Top P",
+                    CURLFORM_COPYCONTENTS, std::to_string(topp).c_str(),
+                    CURLFORM_END);
+
+        curl_formadd(&form, &last,
+                    CURLFORM_COPYNAME, "Samples",
+                    CURLFORM_COPYCONTENTS, std::to_string(samples).c_str(),
+                    CURLFORM_END);
+
+        curl_formadd(&form, &last,
+                    CURLFORM_COPYNAME, "Classifier Free Guidance",
+                    CURLFORM_COPYCONTENTS, std::to_string(CFG).c_str(),
+                    CURLFORM_END);
+
+        curl_formadd(&form, &last,
+                    CURLFORM_COPYNAME, "Duration",
+                    CURLFORM_COPYCONTENTS, std::to_string(duration).c_str(),
+                    CURLFORM_END);
+
+        // Set URL and form data
+        curl_easy_setopt(curl, CURLOPT_URL, ip.c_str());
+        curl_easy_setopt(curl, CURLOPT_HTTPPOST, form);
+
+        // Set the write callback function
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+
+        // Perform the request and store the result
+        res = curl_easy_perform(curl);
+        // Check for errors
+        if(res != CURLE_OK) {
+            std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
+            if(ip == "http://127.0.0.1:55000/"){
+                popupLabel->setLabel("Local server, try starting local server.");
+            } else {
+                popupLabel->setLabel("Could not reach server, try with local server.");
+            }
+            popupLabel->resizeToFit();
+            popupLabel->onTop(popupPanel, CENTER, CENTER, padding);
+
+            popupPanel->show();
+            popupButton->show();
+            popupLabel->show();
+        } else {
+            std::string errs;
+            std::istringstream ss(readBuffer);
+            std::cout << "Raw Response: " << readBuffer << std::endl;
+
+            if (Json::parseFromStream(readerBuilder, ss, &jsonData, &errs)) {
+                // Access the values from the JSON response
+                bool success = jsonData["success"].asBool();
+                std::string userId = jsonData["userid"].asString();
+                const Json::Value downloadLinks = jsonData["download_links"];
+
+                userid = userId;
+                std::cout << "Status: " << (success ? "ok" : "error") << std::endl;
+                std::cout << "User ID: " << userId << std::endl;
+                std::cout << "Download Links:" << std::endl;
+
+                for (const auto &link : downloadLinks) {
+                    std::cout << " - " << link.asString() << std::endl;
+                }
+            } else {
+                std::cerr << "Failed to parse JSON: " << errs << std::endl;
+            }
+        }
+
+        // Cleanup
+        curl_easy_cleanup(curl);
+        curl_formfree(form);
+    }
+
+    const char* homeDir = std::getenv("HOME"); // Works on Unix-like systems
+
+    // Download the files into the generated folder   
+    if(curl) {
+        for(int i = 0; i < samplePanels.size(); i++){
+            samplePanels[i]->hide();
+            sampleButtons[i]->hide();
+        }
+        std::string readBuffer;
+        const Json::Value downloadLinks = jsonData["download_links"];
+        int i = 0;
+        for (const auto &link : downloadLinks) {
+            const std::string url = std::string(ip) + link.asString();
+            std::string datetime = getCurrentDateTime() + std::string("_") + std::to_string(i) + std::string(".wav");
+            std::filesystem::path outputFilename = std::filesystem::path(homeDir) / "Documents" / "MusicGenVST" / "generated" / datetime;
+
+            curl = curl_easy_init();
+
+            std::ofstream outFile(outputFilename, std::ios::binary);
+            if (!outFile)
+            {
+                std::cerr << "Failed to open file for writing" << std::endl;
+            }
+
+            curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallbackStream);
+            curl_easy_setopt(curl, CURLOPT_WRITEDATA, &outFile);
+
+
+            res = curl_easy_perform(curl);
+            if (res != CURLE_OK)
+            {
+                std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
+            }
+
+            curl_easy_cleanup(curl);
+
+            outFile.close();
+
+            float padding = 4.f * fScaleFactor;
+
+            samplePanels[i]->show();
+            sampleButtons[i]->setLabel(datetime);
+            sampleButtons[i]->show();
+
+            i++;
+        }
+    }
+    done = true;
+}
+
+void MusicGenUI::startPollingForCompletion(std::atomic<bool>* done) {
+    // Use a timer or periodic task in your framework (DPF doesn’t have a built-in timer)
+    int i = 0;
+    const std::string spinner = "|/-\\";
+    auto pollCompletion = [this, done, i, spinner]() mutable {
+        if (done->load()) {
+            loaderPanel->hide();
+            loaderSpinner->hide();
+            repaint(); // Update the UI to hide the loader
+
+            delete done; // Free the memory allocated for `done`
+            return true; // Stop polling
+        }
+
+        loaderSpinner->setLabel(std::string(1, spinner[i % spinner.size()]));
+        loaderSpinner->resizeToFit();
+        std::cout << "\rLoading " << spinner[i % 4] << std::flush;
+        i++;
+
+        repaint(); // Keep the UI responsive while polling
+        return false; // Continue polling
+    };
+
+    // Replace this with your framework's timer or loop mechanism
+    addTimer(pollCompletion, 50); // Call `pollCompletion` every 50ms
+}
+
+void MusicGenUI::addTimer(std::function<bool()> callback, int interval) {
+    std::thread([callback, interval]() {
+        while (true) {
+            if (callback()) break; // Stop the timer if the callback returns true
+            std::this_thread::sleep_for(std::chrono::milliseconds(interval));
+        }
+    }).detach();
+}
+
 void MusicGenUI::buttonClicked(Button *button)
 {
-    // Start making the request
-    if(button == generateButton){
-        // TODO: add way for audio prompt
-        // Make if else statment here to update the IP to localhost if in offline mode.
-        std::string ip = "";
-        if(!localOnlineSwitch->getChecked()){
-            ip = "http://82.217.111.120/";
-        } else {
-            ip = "http://127.0.0.1:55000/";
-        }
-
-        float duration = genLengthKnob->getValue();
-        float temperature = temperatureKnob->getValue();
-        float topp = topPKnob->getValue();
-        int samples = nSamplesKnob->getValue();
-        int topk = topKKnob->getValue();
-        int CFG = CFGKnob->getValue();
-        std::string prompt = textPrompt->getText();
-        prompt.append(" ");
-        prompt.append(promptTempo->getText());
-        prompt.append(" ");
-        prompt.append(promptInstrumentation->getText());
-
-        // Make a request
-        CURL *curl;
-        CURLcode res;
-        curl = curl_easy_init();
-
-        // Parse and print the response using a JSON library
-        Json::Value jsonData;
-        Json::CharReaderBuilder readerBuilder;
-
-        // Do a generate request
-        if(curl) {
-            std::string readBuffer;
-
-            // Prepare curl form data
-            struct curl_httppost* form = NULL;
-            struct curl_httppost* last = NULL;
-
-            // Add the audio file
-            if(selectedFile.size() > 0){
-                curl_formadd(&form, &last,
-                        CURLFORM_COPYNAME, "audioInput",
-                        CURLFORM_FILE, selectedFile.c_str(),
-                        CURLFORM_CONTENTTYPE, "audio/wav",
-                        CURLFORM_END);
-            }
-            
-            // Add other form data
-            curl_formadd(&form, &last,
-                        CURLFORM_COPYNAME, "prompt",
-                        CURLFORM_COPYCONTENTS, prompt.c_str(),
-                        CURLFORM_END);
-
-            curl_formadd(&form, &last,
-                        CURLFORM_COPYNAME, "userid",
-                        CURLFORM_COPYCONTENTS, userid.c_str(),
-                        CURLFORM_END);
-
-            curl_formadd(&form, &last,
-                        CURLFORM_COPYNAME, "Temperature",
-                        CURLFORM_COPYCONTENTS, std::to_string(temperature).c_str(),
-                        CURLFORM_END);
-
-            curl_formadd(&form, &last,
-                        CURLFORM_COPYNAME, "Top K",
-                        CURLFORM_COPYCONTENTS, std::to_string(topk).c_str(),
-                        CURLFORM_END);
-
-            curl_formadd(&form, &last,
-                        CURLFORM_COPYNAME, "Top P",
-                        CURLFORM_COPYCONTENTS, std::to_string(topp).c_str(),
-                        CURLFORM_END);
-
-            curl_formadd(&form, &last,
-                        CURLFORM_COPYNAME, "Samples",
-                        CURLFORM_COPYCONTENTS, std::to_string(samples).c_str(),
-                        CURLFORM_END);
-
-            curl_formadd(&form, &last,
-                        CURLFORM_COPYNAME, "Classifier Free Guidance",
-                        CURLFORM_COPYCONTENTS, std::to_string(CFG).c_str(),
-                        CURLFORM_END);
-
-            curl_formadd(&form, &last,
-                        CURLFORM_COPYNAME, "Duration",
-                        CURLFORM_COPYCONTENTS, std::to_string(duration).c_str(),
-                        CURLFORM_END);
-
-            // Set URL and form data
-            curl_easy_setopt(curl, CURLOPT_URL, ip.c_str());
-            curl_easy_setopt(curl, CURLOPT_HTTPPOST, form);
-
-            // Set the write callback function
-            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-            curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-
-            // Perform the request and store the result
-            res = curl_easy_perform(curl);
-            std::cout << "failed?" << std::endl;
-            // Check for errors
-            if(res != CURLE_OK) {
-                std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
-            } else {
-                std::string errs;
-                std::istringstream ss(readBuffer);
-                std::cout << "failed?" << std::endl;
-                std::cout << "Raw Response: " << readBuffer << std::endl;
-
-                if (Json::parseFromStream(readerBuilder, ss, &jsonData, &errs)) {
-                    // Access the values from the JSON response
-                    bool success = jsonData["success"].asBool();
-                    std::string userId = jsonData["userid"].asString();
-                    const Json::Value downloadLinks = jsonData["download_links"];
-
-                    userid = userId;
-                    std::cout << "Status: " << (success ? "ok" : "error") << std::endl;
-                    std::cout << "User ID: " << userId << std::endl;
-                    std::cout << "Download Links:" << std::endl;
-
-                    for (const auto &link : downloadLinks) {
-                        std::cout << " - " << link.asString() << std::endl;
-                    }
-                } else {
-                    std::cerr << "Failed to parse JSON: " << errs << std::endl;
-                }
-            }
-
-            // Cleanup
-            curl_easy_cleanup(curl);
-            curl_formfree(form);
-        }
-
-        const char* homeDir = std::getenv("HOME"); // Works on Unix-like systems
-       
-        // Download the files into the generated folder   
-        if(curl) {
-            for(int i = 0; i < samplePanels.size(); i++){
-                samplePanels[i]->hide();
-                sampleButtons[i]->hide();
-            }
-            std::string readBuffer;
-            const Json::Value downloadLinks = jsonData["download_links"];
-            int i = 0;
-            for (const auto &link : downloadLinks) {
-                const std::string url = std::string(ip) + link.asString();
-                std::string datetime = getCurrentDateTime() + std::string("_") + std::to_string(i) + std::string(".wav");
-                std::filesystem::path outputFilename = std::filesystem::path(homeDir) / "Documents" / "MusicGenVST" / "generated" / datetime;
-
-                curl = curl_easy_init();
-
-                std::ofstream outFile(outputFilename, std::ios::binary);
-                if (!outFile)
-                {
-                    std::cerr << "Failed to open file for writing" << std::endl;
-                }
-
-                curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-                curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallbackStream);
-                curl_easy_setopt(curl, CURLOPT_WRITEDATA, &outFile);
-
-
-                res = curl_easy_perform(curl);
-                if (res != CURLE_OK)
-                {
-                    std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
-                }
-
-                curl_easy_cleanup(curl);
-
-                outFile.close();
-
-                float padding = 4.f * fScaleFactor;
-
-                samplePanels[i]->show();
-                sampleButtons[i]->setLabel(datetime);
-                sampleButtons[i]->show();
-
-                i++;
-            }
-        }
-
-        repaint();
     
-        // Update the UI samples on the right side.
-    } else if(button == importButton) {
-        const char* filters[] = { "*.wav" };
-        const char* filePath = tinyfd_openFileDialog(
-            "Select a File",    // Title of the dialog
-            "",                 // Default path
-            1,                  // Number of filters
-            filters,            // File filters
-            "WAV Files",        // Filter description
-            0                   // Do not allow multiple selections
-        );
+    if(!loaderPanel->isVisible()){
+        // Start making the request
+        if(button == generateButton){
+            loaderPanel->show();
+            loaderSpinner->show();
+            repaint();
+            std::atomic<bool>* done = new std::atomic<bool>(false);
 
-        if (filePath) {
-            std::cout << "Selected file: " << filePath << std::endl;
-            selectedFile = static_cast<std::string>(filePath);
-            loadedFile->setLabel(selectedFile);
-            loadedFile->resizeToFit();
-            loadedFile->show();
-        } else {
-            std::cout << "No file selected." << std::endl;
-            selectedFile = "";
-        }
+            // Start worker threads
+            std::thread(&MusicGenUI::generateFn, this, std::ref(*done)).detach();
 
-    } else if(button == clearImportedSample) {
-        selectedFile = "";
-        loadedFile->hide();
-    } else if(button == openFolderButton) {
-        #ifdef _WIN32
-            // Windows
-            std::system("explorer .");
-        #elif __APPLE__
-            // macOS
-            std::system("open ~/Documents/MusicGenVST/generated");
-            std::cerr << "open ~/Documents/MusicGenVST/generated" << std::endl;
-        #elif __linux__
-            // Linux
-            std::system("xdg-open ~/Documents/MusicGenVST/generated");
-        #else
-            std::cerr << "Unsupported operating system." << std::endl;
-        #endif
-    } else{
-        for(int i = 0; i < sampleButtons.size(); i++){
-            if (button == sampleButtons[i]){
-                const char* homeDir = std::getenv("HOME"); // Works on Unix-like systems
-                std::filesystem::path outputFilename = std::filesystem::path(homeDir) / "Documents" / "MusicGenVST" / "generated" / sampleButtons[i]->getLabel();
-                std::string selectedFile = static_cast<std::string>(outputFilename);
-                plugin->setParameterValue(0, -1.0f);
-                for(int i = 0; i < selectedFile.size(); i++){
-                    plugin->setParameterValue(0, static_cast<float>(selectedFile[i]));
-                    // std::cout << selectedFile[i] << std::endl;
-                }
-                plugin->setParameterValue(0, -2.0f);
-                break;
+            // Set up a timer to poll for the `done` flag and update the UI
+            startPollingForCompletion(done);
+        } else if(button == importButton) {
+            const char* filters[] = { "*.wav" };
+            const char* filePath = tinyfd_openFileDialog(
+                "Select a File",    // Title of the dialog
+                "",                 // Default path
+                1,                  // Number of filters
+                filters,            // File filters
+                "WAV Files",        // Filter description
+                0                   // Do not allow multiple selections
+            );
+
+            if (filePath) {
+                std::cout << "Selected file: " << filePath << std::endl;
+                selectedFile = static_cast<std::string>(filePath);
+                loadedFile->setLabel(selectedFile);
+                loadedFile->resizeToFit();
+                loadedFile->show();
+            } else {
+                std::cout << "No file selected." << std::endl;
+                selectedFile = "";
             }
-        }   
+
+        } else if(button == clearImportedSample) {
+            selectedFile = "";
+            loadedFile->hide();
+        } else if(button == openFolderButton) {
+            #ifdef _WIN32
+                // Windows
+                std::system("explorer .");
+            #elif __APPLE__
+                // macOS
+                std::system("open ~/Documents/MusicGenVST/generated");
+                std::cerr << "open ~/Documents/MusicGenVST/generated" << std::endl;
+            #elif __linux__
+                // Linux
+                std::system("xdg-open ~/Documents/MusicGenVST/generated");
+            #else
+                std::cerr << "Unsupported operating system." << std::endl;
+            #endif
+        } else if(button == popupButton){
+            popupPanel->hide();
+            popupButton->hide();
+            popupLabel->hide();
+        } else{
+            for(int i = 0; i < sampleButtons.size(); i++){
+                if (button == sampleButtons[i]){
+                    const char* homeDir = std::getenv("HOME"); // Works on Unix-like systems
+                    std::filesystem::path outputFilename = std::filesystem::path(homeDir) / "Documents" / "MusicGenVST" / "generated" / sampleButtons[i]->getLabel();
+                    std::string selectedFile = static_cast<std::string>(outputFilename);
+                    plugin->setParameterValue(0, -1.0f);
+                    for(int i = 0; i < selectedFile.size(); i++){
+                        plugin->setParameterValue(0, static_cast<float>(selectedFile[i]));
+                        // std::cout << selectedFile[i] << std::endl;
+                    }
+                    plugin->setParameterValue(0, -2.0f);
+                    break;
+                }
+            }   
+        }
     }
 }
 
 void MusicGenUI::knobDragStarted(Knob *knob)
 {
-    if (knob == temperatureKnob){
-        temperatureLabel->setValue(knob->getValue());
-    } else if (knob == genLengthKnob){
-        genLengthLabel->setValue(knob->getValue());
-    } else if (knob == nSamplesKnob){
-        nSamplesLabel->setValue(knob->getValue());
-    } else if (knob == topKKnob){
-        topKLabel->setValue(knob->getValue());
-    } else if (knob == topPKnob){
-        topPLabel->setValue(knob->getValue());
-    } else if (knob == CFGKnob){
-        CFGLabel->setValue(knob->getValue());
+    if(!loaderPanel->isVisible()){
+        if (knob == temperatureKnob){
+            temperatureLabel->setValue(knob->getValue());
+        } else if (knob == genLengthKnob){
+            genLengthLabel->setValue(knob->getValue());
+        } else if (knob == nSamplesKnob){
+            nSamplesLabel->setValue(knob->getValue());
+        } else if (knob == topKKnob){
+            topKLabel->setValue(knob->getValue());
+        } else if (knob == topPKnob){
+            topPLabel->setValue(knob->getValue());
+        } else if (knob == CFGKnob){
+            CFGLabel->setValue(knob->getValue());
+        }
     }
 }
 
@@ -790,18 +906,20 @@ void MusicGenUI::knobDragFinished(Knob *knob, float value)
 
 void MusicGenUI::knobValueChanged(Knob *knob, float value)
 {
-    if (knob == temperatureKnob){
-        temperatureLabel->setValue(knob->getValue());
-    } else if (knob == genLengthKnob){
-        genLengthLabel->setValue(knob->getValue());
-    } else if (knob == nSamplesKnob){
-        nSamplesLabel->setValue(knob->getValue());
-    } else if (knob == topKKnob){
-        topKLabel->setValue(knob->getValue());
-    } else if (knob == topPKnob){
-        topPLabel->setValue(knob->getValue());
-    } else if (knob == CFGKnob){
-        CFGLabel->setValue(knob->getValue());
+    if(!loaderPanel->isVisible()){
+        if (knob == temperatureKnob){
+            temperatureLabel->setValue(knob->getValue());
+        } else if (knob == genLengthKnob){
+            genLengthLabel->setValue(knob->getValue());
+        } else if (knob == nSamplesKnob){
+            nSamplesLabel->setValue(knob->getValue());
+        } else if (knob == topKKnob){
+            topKLabel->setValue(knob->getValue());
+        } else if (knob == topPKnob){
+            topPLabel->setValue(knob->getValue());
+        } else if (knob == CFGKnob){
+            CFGLabel->setValue(knob->getValue());
+        }
     }
 }
 
@@ -939,9 +1057,9 @@ bool MusicGenUI::onScroll(const ScrollEvent &ev)
 
 void MusicGenUI::addSampleToPanel(float padding, std::string name)
 {
-    int h = 27;
+    int h = 27 * fscaleMult;
     samplePanels.push_back(new Panel(this));
-    samplePanels.back()->setSize((samplesListInner->getWidth() * 0.5f) - (padding), h);
+    samplePanels.back()->setSize((samplesListInner->getWidth() * 0.5f * fscaleMult) - (padding), h);
     samplePanels.back()->background_color = WaiveColors::grey2;
     if(samplePanels.size() == 1){
         samplePanels.back()->onTop(samplesListInner, START, START, padding);
@@ -950,7 +1068,7 @@ void MusicGenUI::addSampleToPanel(float padding, std::string name)
         samplePanels.back()->below(samplePanels[samplePanels.size()-2], CENTER, padding);
     }
     sampleButtons.push_back(new Button(this));
-    sampleButtons.back()->setSize((samplePanels.back()->getWidth() * 0.5), h);
+    sampleButtons.back()->setSize((samplePanels.back()->getWidth() * 0.5 * fscaleMult), h);
     sampleButtons.back()->setLabel(name);
     sampleButtons.back()->textAlign(Align::ALIGN_LEFT); // Fix in the header of the button to change the text alignment
     sampleButtons.back()->background_color = WaiveColors::grey2;

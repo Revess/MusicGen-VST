@@ -11,6 +11,8 @@
 #include <vector>
 #include <chrono>
 #include <cstdlib>
+#include <thread>
+#include <atomic>
 
 #include "DistrhoUI.hpp"
 #include "NanoVG.hpp"
@@ -36,10 +38,10 @@ const unsigned int UI_W = 1500;
 const unsigned int UI_H = 800;
 
 class MusicGenUI : public UI,
-                   DGL::Button::Callback,
-                   Knob::Callback,
-                   Checkbox::Callback,
-                   TextInput::Callback
+                   public DGL::Button::Callback,
+                   public Knob::Callback,
+                   public Checkbox::Callback,
+                   public TextInput::Callback
 {
 public:
     MusicGenUI();
@@ -65,8 +67,14 @@ protected:
 
     void addSampleToPanel(float padding, std::string name);
 
+    void generateFn(std::atomic<bool>& done);
+    void loaderAnim(std::atomic<bool>& done);
+
     // Handle mouse events
     bool onScroll(const ScrollEvent &ev) override;
+
+    void startPollingForCompletion(std::atomic<bool>* done);
+    void addTimer(std::function<bool()> callback, int interval);
 
 private:
     MusicGen *plugin;
@@ -115,10 +123,16 @@ private:
     Button *importButton;
     Button *clearImportedSample;
     Label *loadedFile;
+    Label *loaderSpinner;
 
     Panel *samplesListPanel;
     Panel *samplesListInner;
     Panel *scrollBar;
+    Panel *loaderPanel;
+
+    Panel *popupPanel;
+    Button *popupButton;
+    Label *popupLabel;
 
     std::vector<Panel*> samplePanels;
     std::vector<Button*> sampleButtons;
@@ -130,8 +144,10 @@ private:
 
     double fScaleFactor;
     float fScale;
+    float fscaleMult;
     int yOffset = 0;
     int scrollBarHeight = 0;
+    std::condition_variable cv;
     std::string selectedFile = "";
     std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
 
