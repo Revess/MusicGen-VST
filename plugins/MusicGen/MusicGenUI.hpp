@@ -13,6 +13,8 @@
 #include <cstdlib>
 #include <thread>
 #include <atomic>
+#include <functional>
+#include <condition_variable>
 
 #include "DistrhoUI.hpp"
 #include "NanoVG.hpp"

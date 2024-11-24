@@ -681,6 +681,8 @@ void MusicGenUI::generateFn(std::atomic<bool>& done)
                 popupLabel->setLabel("Could not reach server, try with local server.");
             }
             popupLabel->resizeToFit();
+            float padding = 4.f * fScaleFactor;
+
             popupLabel->onTop(popupPanel, CENTER, CENTER, padding);
 
             popupPanel->show();
@@ -719,7 +721,7 @@ void MusicGenUI::generateFn(std::atomic<bool>& done)
 
     // Download the files into the generated folder   
     if(curl) {
-        for(int i = 0; i < samplePanels.size(); i++){
+        for(std::size_t i = 0; i < samplePanels.size(); i++){
             samplePanels[i]->hide();
             sampleButtons[i]->hide();
         }
@@ -753,8 +755,6 @@ void MusicGenUI::generateFn(std::atomic<bool>& done)
             curl_easy_cleanup(curl);
 
             outFile.close();
-
-            float padding = 4.f * fScaleFactor;
 
             samplePanels[i]->show();
             sampleButtons[i]->setLabel(datetime);
@@ -862,13 +862,13 @@ void MusicGenUI::buttonClicked(Button *button)
             popupButton->hide();
             popupLabel->hide();
         } else{
-            for(int i = 0; i < sampleButtons.size(); i++){
+            for(std::size_t i = 0; i < sampleButtons.size(); i++){
                 if (button == sampleButtons[i]){
                     const char* homeDir = std::getenv("HOME"); // Works on Unix-like systems
                     std::filesystem::path outputFilename = std::filesystem::path(homeDir) / "Documents" / "MusicGenVST" / "generated" / sampleButtons[i]->getLabel();
                     std::string selectedFile = static_cast<std::string>(outputFilename);
                     plugin->setParameterValue(0, -1.0f);
-                    for(int i = 0; i < selectedFile.size(); i++){
+                    for(std::size_t i = 0; i < selectedFile.size(); i++){
                         plugin->setParameterValue(0, static_cast<float>(selectedFile[i]));
                         // std::cout << selectedFile[i] << std::endl;
                     }
@@ -1031,7 +1031,7 @@ bool MusicGenUI::onScroll(const ScrollEvent &ev)
         if(yOffsetPrev != yOffset){ // Actually do a scroll
             this->start = std::chrono::high_resolution_clock::now(); // Reset the time
             scrollBar->setAbsolutePos(scrollBar->getAbsoluteX(), scrollBar->getAbsoluteY() + scrollbarOffset);
-            for(int i = 0; i < samplePanels.size(); i++){
+            for(std::size_t i = 0; i < samplePanels.size(); i++){
                 if(i == 0){
                     samplePanels[i]->setAbsolutePos(samplesListInner->getAbsoluteX() + padding, samplesListInner->getAbsoluteY() + padding + yOffset);
                 } else {
