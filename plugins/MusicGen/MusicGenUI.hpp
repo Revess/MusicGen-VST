@@ -72,9 +72,6 @@ protected:
     void generateFn(std::atomic<bool>& done);
     void loaderAnim(std::atomic<bool>& done);
 
-    // Handle mouse events
-    bool onScroll(const ScrollEvent &ev) override;
-
     void startPollingForCompletion(std::atomic<bool>* done);
     void addTimer(std::function<bool()> callback, int interval);
 
@@ -129,7 +126,6 @@ private:
 
     Panel *samplesListPanel;
     Panel *samplesListInner;
-    Panel *scrollBar;
     Panel *loaderPanel;
 
     Panel *popupPanel;
@@ -148,7 +144,6 @@ private:
     float fScale;
     float fscaleMult;
     int yOffset = 0;
-    int scrollBarHeight = 0;
     std::condition_variable cv;
     std::string selectedFile = "";
     std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();

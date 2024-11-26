@@ -1,18 +1,28 @@
 #!/bin/bash
-# make clean
-make 
-
-
 UNAME_S=$(uname -s)
+UNAME_M=$(uname -m)
+
 
 if [ "$UNAME_S" = "Linux" ]; then
+    make 
     sudo cp -r ../../bin/MusicGenVST.vst3 ../../vst3/MusicGenVST.vst3
     ../../bin/MusicGenVST
 elif [ "$UNAME_S" = "Darwin" ]; then
-    sudo cp -r ../../bin/MusicGenVST.vst ../../vst2/MusicGenVST.vst
-    sudo cp -r ../../bin/MusicGenVST.vst3 ../../vst3/MusicGenVST.vst3
-    ../../bin/MusicGenVST.app/Contents/MacOS/MusicGenVST
+    if [ "$UNAME_M" = "x86_64" ]; then
+        arch -x86_64 make 
+        echo "Running on macOS x64"
+        sudo cp -r ../../bin/MusicGenVST.vst ../../vst2/MusicGenVST.vst
+        sudo cp -r ../../bin/MusicGenVST.vst3 ../../vst3/MusicGenVST.vst3
+        arch -x86_64 ../../bin/MusicGenVST.app/Contents/MacOS/MusicGenVST
+    elif [ "$UNAME_M" = "arm64" ]; then
+        arch -arm64 make 
+        echo "Running on macOS arm64"
+        sudo cp -r ../../bin/MusicGenVST.vst ../../vst2/MusicGenVST.vst
+        sudo cp -r ../../bin/MusicGenVST.vst3 ../../vst3/MusicGenVST.vst3
+        arch -arm64 ../../bin/MusicGenVST.app/Contents/MacOS/MusicGenVST
+    fi
 elif [ "$OS" = "Windows_NT" ]; then
+    make 
     ../../bin/MusicGenVST
 else
     echo "Unsupported operating system: $UNAME_S"

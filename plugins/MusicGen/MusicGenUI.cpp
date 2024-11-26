@@ -53,6 +53,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
     }
 
     float fontsize = 8.f * fScaleFactor * fscaleMult;
+    fScaleFactor = fscaleMult; // Might need to remove this scaler.
 
     // Main input panel
     int promptPanelHeight = 0;
@@ -187,7 +188,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
         promptPanelHeight += textPrompt->getHeight();
         promptPanelHeight += textPromptLabel->getHeight();
         promptPanelHeight += clearImportedSample->getHeight();
-        promptPanelHeight += loadedFile->getHeight();
+        promptPanelHeight += fontsize * 0.9;
         loadedFile->hide();
 
         promptPanel->setSize(generatePanel->getWidth() - (padding * 2.0), promptPanelHeight  + (padding * 1.0), true);
@@ -200,8 +201,8 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
         }
 
         // Now add knobs
-        int knobW = 200;
-        int knobH = 125;
+        int knobW = 150;
+        int knobH = 150;
         // Length
         {
             genLengthPanel = new Panel(this);
@@ -214,7 +215,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             genLengthKnob->min = 0.4;
             genLengthKnob->label = "Length";
             genLengthKnob->setFontSize(fontsize);
-            genLengthKnob->setRadius(10.f * fScaleFactor);
+            genLengthKnob->setRadius(12.f * fScaleFactor);
             genLengthKnob->gauge_width = 2.0f * fScaleFactor;
             genLengthKnob->setValue(8);
             genLengthKnob->resizeToFit();
@@ -228,6 +229,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             genLengthLabel->above(genLengthKnob, CENTER, padding);
             genLengthLabel->setValue(genLengthKnob->getValue());
         }
+
         // Temperature
         {
             temperaturePanel = new Panel(this);
@@ -240,7 +242,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             temperatureKnob->min = 0.0;
             temperatureKnob->label = "Temperature";
             temperatureKnob->setFontSize(fontsize);
-            temperatureKnob->setRadius(10.f * fScaleFactor);
+            temperatureKnob->setRadius(12.f * fScaleFactor);
             temperatureKnob->gauge_width = 3.0f * fScaleFactor;
             temperatureKnob->setValue(0.7);
             temperatureKnob->resizeToFit();
@@ -254,6 +256,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             temperatureLabel->above(temperatureKnob, CENTER, padding);
             temperatureLabel->setValue(temperatureKnob->getValue());
         }
+
         // nSamples
         {
             nSamplesPanel = new Panel(this);
@@ -266,7 +269,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             nSamplesKnob->min = 1;
             nSamplesKnob->label = "Samples";
             nSamplesKnob->setFontSize(fontsize);
-            nSamplesKnob->setRadius(10.f * fScaleFactor);
+            nSamplesKnob->setRadius(12.f * fScaleFactor);
             nSamplesKnob->integer = true;
             nSamplesKnob->gauge_width = 3.0f * fScaleFactor;
             nSamplesKnob->setValue(1);
@@ -287,6 +290,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             advancedSettingsPanel = new Panel(this);
             advancedSettingsPanel->setSize(promptPanel->getWidth() - (padding), 100, true);
             advancedSettingsPanel->below(genLengthPanel, CENTER, padding);
+
             
             advancedSettings = new Checkbox(this);
             advancedSettings->setSize(25, 25, true);
@@ -334,7 +338,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             topPKnob->min = 0.0;
             topPKnob->label = "Top P";
             topPKnob->setFontSize(fontsize);
-            topPKnob->setRadius(10.f * fScaleFactor);
+            topPKnob->setRadius(12.f * fScaleFactor);
             topPKnob->gauge_width = 3.0f * fScaleFactor;
             topPKnob->setValue(0.0);
             topPKnob->resizeToFit();
@@ -368,7 +372,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             topKKnob->integer = true;
             topKKnob->label = "Top K";
             topKKnob->setFontSize(fontsize);
-            topKKnob->setRadius(10.f * fScaleFactor);
+            topKKnob->setRadius(12.f * fScaleFactor);
             topKKnob->gauge_width = 3.0f * fScaleFactor;
             topKKnob->setValue(500);
             topKKnob->resizeToFit();
@@ -401,7 +405,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             CFGKnob->min = 1;
             CFGKnob->label = "CFG";
             CFGKnob->setFontSize(fontsize);
-            CFGKnob->setRadius(10.f * fScaleFactor);
+            CFGKnob->setRadius(12.f * fScaleFactor);
             CFGKnob->integer = true;
             CFGKnob->gauge_width = 3.0f * fScaleFactor;
             CFGKnob->setValue(5);
@@ -444,15 +448,9 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             openFolderButton->setCallback(this);
 
             samplesListInner = new Panel(this);
-            samplesListInner->setSize((width * 0.5f * 0.5f) - (padding * 2), ((27 * fScaleFactor)*10 + padding*11), true);
+            samplesListInner->setSize((width * 0.5f * 0.5f) - (padding * 2), ((27 * getScaleFactor()) * 10 + padding * 11), true);
             samplesListInner->onTop(samplesListPanel, CENTER, START, padding);
             samplesListInner->background_color = WaiveColors::dark;
-
-            // scrollBar = new Panel(this);
-            // scrollBar->setSize((padding * 2), samplesListInner->getHeight() - (padding * 2), true);
-            // scrollBar->onTop(samplesListInner, END, CENTER, 0);
-            // scrollBar->background_color = WaiveColors::light1;
-            // scrollBarHeight = scrollBar->getHeight();
 
             // Loop over it change the positioning to take into account the scroll top etc.
             for(int i = 0; i < 10; i++) {
@@ -574,6 +572,7 @@ std::string getBasename(const std::string& url)
 
 void MusicGenUI::generateFn(std::atomic<bool>& done)
 {
+    bool crashed = false;
     // TODO: add way for audio prompt
     // Make if else statment here to update the IP to localhost if in offline mode.
     std::string ip = "";
@@ -676,10 +675,11 @@ void MusicGenUI::generateFn(std::atomic<bool>& done)
         if(res != CURLE_OK) {
             std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
             if(ip == "http://127.0.0.1:55000/"){
-                popupLabel->setLabel("Local server, try starting local server.");
+                popupLabel->setLabel("Local server not found, try starting local server.");
             } else {
                 popupLabel->setLabel("Could not reach server, try with local server.");
             }
+            float padding = 4.f * fScaleFactor;
             popupLabel->resizeToFit();
             float padding = 4.f * fScaleFactor;
 
@@ -688,6 +688,8 @@ void MusicGenUI::generateFn(std::atomic<bool>& done)
             popupPanel->show();
             popupButton->show();
             popupLabel->show();
+            repaint();
+            crashed = true;
         } else {
             std::string errs;
             std::istringstream ss(readBuffer);
@@ -720,7 +722,7 @@ void MusicGenUI::generateFn(std::atomic<bool>& done)
     const char* homeDir = std::getenv("HOME"); // Works on Unix-like systems
 
     // Download the files into the generated folder   
-    if(curl) {
+    if(curl && !crashed) {
         for(std::size_t i = 0; i < samplePanels.size(); i++){
             samplePanels[i]->hide();
             sampleButtons[i]->hide();
@@ -1001,65 +1003,11 @@ void MusicGenUI::checkboxUpdated(Checkbox *checkbox, bool value)
     repaint();
 }
 
-bool MusicGenUI::onScroll(const ScrollEvent &ev)
-{
-    float mouseX = ev.absolutePos.getX();
-    float mouseY = ev.absolutePos.getY();
-    float padding = 4.f * fScaleFactor;
-    float yOffsetPrev = yOffset;
-    if(
-        mouseX >= samplesListInner->getAbsoluteX() && 
-        mouseX <= (samplesListInner->getAbsoluteX() + samplesListInner->getWidth()) &&
-        mouseY >= samplesListInner->getAbsoluteY() && 
-        mouseY <= (samplesListInner->getAbsoluteY() + samplesListInner->getHeight()) &&
-        1 == 0
-    )
-    {
-        if(samplePanels[0]->getAbsoluteY() == samplesListInner->getAbsoluteY() - padding){
-
-        }
-        double yScroll = -ev.delta.getY();
-        // std::cout << ev.delta.getY() << std::endl;
-        int scrollbarOffset = -round(static_cast<float>(samplesListInner->getHeight() - (padding * 2) - scrollBar->getHeight()) / static_cast<float>((samplePanels.size() - 12)));
-        if(yScroll < 0 && samplePanels[0]->getAbsoluteY() != samplesListInner->getAbsoluteY() + padding){ // Down when can actually go up
-            yOffset += samplePanels[0]->getHeight() + padding;
-        } else if(samplesListInner->getAbsoluteY() + samplesListInner->getHeight() - padding - samplePanels[0]->getHeight() <= samplePanels.back()->getAbsoluteY()) { // Up when actually can go
-            yOffset -= samplePanels[0]->getHeight() + padding;
-            scrollbarOffset = -scrollbarOffset;
-        }
-
-        if(yOffsetPrev != yOffset){ // Actually do a scroll
-            this->start = std::chrono::high_resolution_clock::now(); // Reset the time
-            scrollBar->setAbsolutePos(scrollBar->getAbsoluteX(), scrollBar->getAbsoluteY() + scrollbarOffset);
-            for(std::size_t i = 0; i < samplePanels.size(); i++){
-                if(i == 0){
-                    samplePanels[i]->setAbsolutePos(samplesListInner->getAbsoluteX() + padding, samplesListInner->getAbsoluteY() + padding + yOffset);
-                } else {
-                    samplePanels[i]->below(samplePanels[i - 1], CENTER, padding);
-                }
-                sampleButtons[i]->onTop(samplePanels[i], START, START, 0);
-                samplesRemove[i]->onTop(samplePanels[i], END, END, 0);
-                if(samplePanels[i]->getAbsoluteY() <= samplesListInner->getAbsoluteY() - padding || 
-                samplePanels[i]->getAbsoluteY() + samplePanels[i]->getHeight() >= samplesListInner->getAbsoluteY() + samplesListInner->getHeight()){
-                    samplePanels[i]->hide();
-                    sampleButtons[i]->hide();
-                    samplesRemove[i]->hide();
-                } else {
-                    samplePanels[i]->show();
-                    sampleButtons[i]->show();
-                    samplesRemove[i]->show();
-                }
-            }
-            repaint();
-        }
-    }
-}
-
 void MusicGenUI::addSampleToPanel(float padding, std::string name)
 {
     int h = 27 * fscaleMult;
     samplePanels.push_back(new Panel(this));
-    samplePanels.back()->setSize((samplesListInner->getWidth() * 0.5f * fscaleMult) - (padding), h);
+    samplePanels.back()->setSize((samplesListInner->getWidth() * 0.5f * fscaleMult) - (padding * fscaleMult), h);
     samplePanels.back()->background_color = WaiveColors::grey2;
     if(samplePanels.size() == 1){
         samplePanels.back()->onTop(samplesListInner, START, START, padding);
