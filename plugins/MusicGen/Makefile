@@ -1,7 +1,8 @@
 #!/usr/bin/make -f
 
 NAME = MusicGenVST
-CXXFLAGS += -std=c++17
+CXXFLAGS += -std=c++17 -Wall -Wextra
+# CXX += /opt/homebrew/opt/qt/bin/qmake
 
 UNAME_S := $(shell uname -s)
 
@@ -11,8 +12,11 @@ ifeq ($(UNAME_S), Linux)
 endif
 
 ifeq ($(UNAME_S), Darwin)
-    CXXFLAGS += -I/usr/local/include/jsoncpp -I/usr/local/include -I/opt/homebrew/include -DDARWIN -arch arm64
-    LDFLAGS += -lcurl -ljsoncpp -lsndfile
+    CXXFLAGS += -I/usr/local/include/jsoncpp \
+	-I/usr/local/include -I/opt/homebrew/include \
+	-DDARWIN -arch arm64
+    LDFLAGS += -lcurl -ljsoncpp -lsndfile \
+	-F/opt/homebrew/opt/qt/lib -framework QtCore -framework QtGui -framework QtWidgets
 endif
 ifeq ($(OS), Windows_NT)
 endif

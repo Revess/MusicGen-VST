@@ -55,6 +55,9 @@ protected:
     void stateChanged(const char *key, const char *value) override;
     void onNanoDisplay() override;
     void uiScaleFactorChanged(const double scaleFactor) override;
+    
+    bool onMouse(const MouseEvent &ev) override;
+    bool onMotion(const MotionEvent &ev) override;
 
     // Callback handler
     void buttonClicked(Button *button) override;
@@ -144,6 +147,9 @@ private:
     float fScale;
     float fscaleMult;
     int yOffset = 0;
+    int butt_down = -1;
+    bool startedDragging = false;
+    std::string current_dragging_path = "";
     std::condition_variable cv;
     std::string selectedFile = "";
     std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();

@@ -515,7 +515,6 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
 
 MusicGenUI::~MusicGenUI()
 {
-
 }
 
 void MusicGenUI::parameterChanged(uint32_t index, float value)
@@ -681,7 +680,6 @@ void MusicGenUI::generateFn(std::atomic<bool>& done)
             }
             float padding = 4.f * fScaleFactor;
             popupLabel->resizeToFit();
-            float padding = 4.f * fScaleFactor;
 
             popupLabel->onTop(popupPanel, CENTER, CENTER, padding);
 
@@ -806,7 +804,6 @@ void MusicGenUI::addTimer(std::function<bool()> callback, int interval) {
 
 void MusicGenUI::buttonClicked(Button *button)
 {
-    
     if(!loaderPanel->isVisible()){
         // Start making the request
         if(button == generateButton){
@@ -1031,6 +1028,43 @@ void MusicGenUI::addSampleToPanel(float padding, std::string name)
     // samplesRemove.back()->setLabel("⌫");
     // samplesRemove.back()->background_color = WaiveColors::grey2;
     // samplesRemove.back()->onTop(samplePanels.back(), END, END, 0);
+}
+
+bool MusicGenUI::onMouse(const MouseEvent &ev)
+{
+    butt_down *= -1;
+    if(butt_down == -1) {
+        current_dragging_path = "";
+    } else {
+        startedDragging = false;
+    }
+    return UI::onMouse(ev);
+}
+
+bool MusicGenUI::onMotion(const MotionEvent &ev)
+{
+    if(butt_down == 1 && sampleButtons[0]->isVisible()){
+        if(current_dragging_path == ""){ // Init the dragging
+            for(size_t i = 0; i < sampleButtons.size(); i++){
+                if(
+                    ev.pos.getX() > sampleButtons[i]->getAbsoluteX() &&
+                    ev.pos.getX() < sampleButtons[i]->getAbsoluteX() + sampleButtons[i]->getWidth() &&
+                    ev.pos.getY() > sampleButtons[i]->getAbsoluteY() &&
+                    ev.pos.getY() < sampleButtons[i]->getAbsoluteY() + sampleButtons[i]->getHeight() &&
+                    sampleButtons[i]->isVisible()
+                ){
+                    const char* homeDir = std::getenv("HOME"); // Works on Unix-like systems
+                    std::filesystem::path outputFilename = std::filesystem::path(homeDir) / "Documents" / "MusicGenVST" / "generated" / sampleButtons[i]->getLabel();
+                    current_dragging_path = outputFilename;
+                    std::cout << current_dragging_path << std::endl;
+                    break;
+                }
+            }
+        } else if(!startedDragging){ // Do the actual drag n drop
+            // Execute the system based drag n drop.
+        }
+    }
+    return UI::onMotion(ev);
 }
 
 END_NAMESPACE_DISTRHO

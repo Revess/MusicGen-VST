@@ -2,6 +2,7 @@
 UNAME_S=$(uname -s)
 UNAME_M=$(uname -m)
 
+export PKG_CONFIG_PATH="/opt/homebrew/opt/qt/lib/pkgconfig:$PKG_CONFIG_PATH"
 
 if [ "$UNAME_S" = "Linux" ]; then
     make 
