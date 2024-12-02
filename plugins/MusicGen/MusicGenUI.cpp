@@ -1,13 +1,13 @@
 #include "MusicGenUI.hpp"
 
-
 // TODO :
-// Test localhost toggle with python code.
-// Add a loading screen.
+// FIX text input fields
+// Fix that label is inside the prompt text field
+// Add an option for only integers
 
-// Some small pop ups for the user like:
-    // Error no local server found
-    // Error no remote server found
+// Nice to have: Sure arrow keys to change the value
+
+// Fix number input box, it doesnt run nicely
 
 std::string getCurrentDateTime() {
     // Get the current time
@@ -52,245 +52,236 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
         fscaleMult = 2.0;
     }
 
-    float fontsize = 8.f * fScaleFactor * fscaleMult;
+    fontsize = 7.f * fScaleFactor * fscaleMult;
+
     fScaleFactor = fscaleMult; // Might need to remove this scaler.
 
+    float textBoxHeight = 50;
+    float numBoxHeight = 30;
+    float buttonHeight = 40;
     // Main input panel
-    int promptPanelHeight = 0;
-    int controltPanelHeight = 0;
-    {
+    {   
+        // Generate Panel
         {
             generatePanel = new Panel(this);
-            generatePanel->setSize((width * 0.5f * 0.5f) - (padding * 2.0), (height * 0.5f) - (padding * 2.0), true);
-            generatePanel->setAbsolutePos(padding, padding);
+            generatePanel->setSize((width * 0.5f * 0.5f), (height * 0.5f), true);
+            generatePanel->setAbsolutePos(0, 0);
+            generatePanel->background_color = WaiveColors::bgGrey;
         }
 
+        // Loading and clearing the audio prompt
         {
-            promptPanel = new Panel(this);
-            promptPanel->setSize(generatePanel->getWidth(), (generatePanel->getHeight() * 0.9) - (padding * 2.0), true);
-            promptPanel->onTop(generatePanel, CENTER, START, padding);
+            {
+                importPanel = new Panel(this);
+                importPanel->background_color = WaiveColors::bgGrey;
+                importPanel->setSize(generatePanel->getWidth(), 100, true);
+                importPanel->onTop(generatePanel, START, START, padding);
+            }
+            
+            {
+                importButton = new Button(this);
+                importButton->text_color = Color(255, 255, 255);
+                importButton->background_color = WaiveColors::bgDark;
+                importButton->highlight_color = WaiveColors::bgHighlight;
+                importButton->setLabel("Upload Audio File");
+                importButton->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
+                importButton->setFontSize(fontsize);
+                importButton->setSize((generatePanel->getWidth() * 0.7f) - (padding * 1.0f), buttonHeight, true);
+                importButton->onTop(importPanel, START, CENTER, 0);
+                importButton->setCallback(this);
+            }
+
+            {
+                clearImportedSample = new Button(this);
+                clearImportedSample->text_color = Color(255, 255, 255);
+                clearImportedSample->background_color = WaiveColors::bgDark;
+                clearImportedSample->highlight_color = WaiveColors::bgHighlight;
+                clearImportedSample->setLabel("Clear Sample");
+                clearImportedSample->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
+                clearImportedSample->setFontSize(fontsize);
+                clearImportedSample->setSize((generatePanel->getWidth() * 0.3f) - (padding * 1.0f), buttonHeight, true);
+                clearImportedSample->rightOf(importButton, START, 0);
+                clearImportedSample->setCallback(this);
+
+                {
+                    loadedFile = new Label(this, "This is the test loc of the load filepath");
+                    loadedFile->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
+                    loadedFile->setFontSize(fontsize * 0.9);
+                    loadedFile->text_color = WaiveColors::text;
+                    loadedFile->resizeToFit();
+                    loadedFile->below(importButton, START, padding);
+                }
+            }
+            loadedFile->hide();
         }
 
+        // Prompt
         {
-            localOnlineSwitch = new Checkbox(this);
-            localOnlineSwitch->setSize(25, 25, true);
-            localOnlineSwitch->background_color = WaiveColors::text;
-            localOnlineSwitch->foreground_color = WaiveColors::text;
-            localOnlineSwitch->setChecked(false, false);
-            localOnlineSwitch->onTop(promptPanel, END, START, padding);
-            localOnlineSwitch->setCallback(this);
-
-            localOnlineSwitchLabel = new Label(this, "Use local server");
-            localOnlineSwitchLabel->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
-            localOnlineSwitchLabel->setFontSize(fontsize);
-            localOnlineSwitchLabel->text_color = WaiveColors::text;
-            localOnlineSwitchLabel->resizeToFit();
-            localOnlineSwitchLabel->leftOf(localOnlineSwitch, CENTER, padding);
-            localOnlineSwitch->hide();
-            localOnlineSwitchLabel->hide();
-        }
-
-        // Now add input box for prompt
-        float inpBoxW = promptPanel->getWidth() - (padding * 2);
-        {
-            textPromptLabel = new Label(this, "Prompt");
-            textPromptLabel->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
-            textPromptLabel->setFontSize(fontsize);
-            textPromptLabel->text_color = WaiveColors::text;
-            textPromptLabel->resizeToFit();
-            textPromptLabel->onTop(promptPanel, START, START, padding);
-
             textPrompt = new TextInput(this);
-            textPrompt->setSize(inpBoxW, 40, true);
-            textPrompt->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
+            textPrompt->setPlaceholder("Sample Description");
+            textPrompt->text_color_greyed = WaiveColors::grey2;
+            textPrompt->setSize(generatePanel->getWidth() - (padding * 2.0f), textBoxHeight, true);
+            textPrompt->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
             textPrompt->setFontSize(fontsize);
-            textPrompt->align = Align::ALIGN_CENTER;
-            textPrompt->foreground_color = WaiveColors::light1;
-            textPrompt->background_color = WaiveColors::light1;
-            textPrompt->below(textPromptLabel, START, padding);
+            textPrompt->below(loadedFile, START, padding);
             textPrompt->setCallback(this);
         }
 
-        // Now add input box for tempo information
+        // hBox1
         {
-            promptTempoLabel = new Label(this, "Tempo");
-            promptTempoLabel->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
+            hBox1 = new Panel(this);
+            hBox1->background_color = WaiveColors::bgGrey;
+            hBox1->setSize(textPrompt->getWidth(), 25, true);
+            hBox1->below(textPrompt, START, padding);
+        }
+
+        // Input box for instrumentation
+        {
+            promptInstrumentation = new TextInput(this);
+            promptInstrumentation->setPlaceholder("Add Instrument (optional)");
+            promptInstrumentation->text_color_greyed = WaiveColors::grey2;
+            promptInstrumentation->setSize(generatePanel->getWidth() - (padding * 2.0f), textBoxHeight, true);
+            promptInstrumentation->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
+            promptInstrumentation->setFontSize(fontsize);
+            promptInstrumentation->below(hBox1, START, padding);
+            promptInstrumentation->setCallback(this);
+        }
+
+        // hBox2
+        {
+            hBox2 = new Panel(this);
+            hBox2->background_color = WaiveColors::bgGrey;
+            hBox2->setSize(promptInstrumentation->getWidth(), 50, true);
+            hBox2->below(promptInstrumentation, START, padding);
+        }
+
+        // length
+        {
+            sampleLengthPanel = new Panel(this);
+            sampleLengthPanel->background_color = WaiveColors::bgGrey;
+
+            sampleLengthLabel = new Label(this, "Length");
+            sampleLengthLabel->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
+            sampleLengthLabel->setFontSize(fontsize);
+            sampleLengthLabel->text_color = WaiveColors::text;
+            sampleLengthLabel->resizeToFit();
+
+            sampleLength = new NumberInput(this);
+            sampleLength->text_color_greyed = WaiveColors::grey2;
+            sampleLength->background_color = WaiveColors::numBoxColor;
+            sampleLength->min = 0.4;
+            sampleLength->max = 30;
+            sampleLength->setText("8");
+            sampleLength->align = Align::ALIGN_CENTER;
+            sampleLength->setSize((generatePanel->getWidth() * 0.15) - (padding * 2.0f), numBoxHeight, true);
+            sampleLength->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
+            sampleLength->setFontSize(fontsize);
+            sampleLength->setCallback(this);
+
+            sampleLengthPanel->setSize(sampleLength->getWidth() + sampleLengthLabel->getWidth(), numBoxHeight, true);
+            sampleLengthPanel->below(hBox2, START, padding);
+
+            sampleLengthLabel->onTop(sampleLengthPanel, START, CENTER, 0);
+            sampleLength->rightOf(sampleLengthLabel, CENTER, padding);
+        }
+
+        // BPM
+        {
+            promptTempoPanel = new Panel(this);
+            promptTempoPanel->background_color = WaiveColors::bgGrey;
+
+            promptTempoLabel = new Label(this, "BPM");
+            promptTempoLabel->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
             promptTempoLabel->setFontSize(fontsize);
             promptTempoLabel->text_color = WaiveColors::text;
             promptTempoLabel->resizeToFit();
-            promptTempoLabel->below(textPrompt, START, padding);
 
-            promptTempo = new TextInput(this);
-            promptTempo->setSize((inpBoxW * 0.5f) - (padding * 0.5f), 40, true);
-            promptTempo->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
-            promptTempo->setFontSize(fontsize);
+            promptTempo = new NumberInput(this);
+            promptTempo->text_color_greyed = WaiveColors::grey2;
+            promptTempo->background_color = WaiveColors::numBoxColor;
+            promptTempo->min = 1;
+            promptTempo->max = 999;
             promptTempo->align = Align::ALIGN_CENTER;
-            promptTempo->foreground_color = WaiveColors::light1;
-            promptTempo->background_color = WaiveColors::light1;
-            promptTempo->below(promptTempoLabel, START, padding);
+            promptTempo->setText("120");
+            promptTempo->setSize((generatePanel->getWidth() * 0.15) - (padding * 2.0f), numBoxHeight, true);
+            promptTempo->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
+            promptTempo->setFontSize(fontsize);
             promptTempo->setCallback(this);
-        }
 
-        // Now add input box for instrumentation
-        {
-            promptInstrumentation = new TextInput(this);
-            promptInstrumentation->setSize((inpBoxW * 0.5f) - (padding * 0.5f), 40, true);
-            promptInstrumentation->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
-            promptInstrumentation->setFontSize(fontsize);
-            promptInstrumentation->align = Align::ALIGN_CENTER;
-            promptInstrumentation->foreground_color = WaiveColors::light1;
-            promptInstrumentation->background_color = WaiveColors::light1;
-            promptInstrumentation->rightOf(promptTempo, START, padding);
-            promptInstrumentation->setCallback(this);
+            promptTempoPanel->setSize(promptTempo->getWidth() + promptTempoLabel->getWidth(), numBoxHeight, true);
+            promptTempoPanel->below(hBox2, CENTER, padding);
 
-            promptInstrumentationLabel = new Label(this, "Instrumentation");
-            promptInstrumentationLabel->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
-            promptInstrumentationLabel->setFontSize(fontsize);
-            promptInstrumentationLabel->text_color = WaiveColors::text;
-            promptInstrumentationLabel->resizeToFit();
-            promptInstrumentationLabel->above(promptInstrumentation, START, padding);
-            // promptInstrumentationLabel->rightOf(promptTempoLabel, START, padding);
-        }
-
-        {
-            importButton = new Button(this);
-            importButton->setLabel("Import Sample");
-            importButton->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
-            importButton->setFontSize(fontsize);
-            importButton->resizeToFit();
-            importButton->below(promptTempo, CENTER, padding);
-            importButton->setCallback(this);
-        }
-
-        {
-            clearImportedSample = new Button(this);
-            clearImportedSample->setLabel("Clear Sample");
-            clearImportedSample->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
-            clearImportedSample->setFontSize(fontsize);
-            clearImportedSample->resizeToFit();
-            clearImportedSample->below(promptInstrumentation, CENTER, padding);
-            clearImportedSample->setCallback(this);
-
-            {
-                loadedFile = new Label(this, "This is the test loc of the load filepath");
-                loadedFile->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
-                loadedFile->setFontSize(fontsize * 0.9);
-                loadedFile->text_color = WaiveColors::text;
-                loadedFile->resizeToFit();
-                loadedFile->below(importButton, START, padding);
-            }
-        }
-
-        promptPanelHeight += promptInstrumentation->getHeight();
-        promptPanelHeight += promptInstrumentationLabel->getHeight();
-        promptPanelHeight += promptTempo->getHeight();
-        promptPanelHeight += promptTempoLabel->getHeight();
-        promptPanelHeight += textPrompt->getHeight();
-        promptPanelHeight += textPromptLabel->getHeight();
-        promptPanelHeight += clearImportedSample->getHeight();
-        promptPanelHeight += fontsize * 0.9;
-        loadedFile->hide();
-
-        promptPanel->setSize(generatePanel->getWidth() - (padding * 2.0), promptPanelHeight  + (padding * 1.0), true);
-
-        // Control panel
-        {
-            controlsPanel = new Panel(this);
-            controlsPanel->setSize(promptPanel->getWidth(), (generatePanel->getHeight() * 0.6f) - padding, true);
-            controlsPanel->below(promptPanel, CENTER, padding);
-        }
-
-        // Now add knobs
-        int knobW = 150;
-        int knobH = 150;
-        // Length
-        {
-            genLengthPanel = new Panel(this);
-            genLengthPanel->setSize(knobW, knobH, true);
-            genLengthPanel->onTop(controlsPanel, CENTER, START, padding);
-
-            genLengthKnob = new Knob(this);
-            genLengthKnob->setName("Length");
-            genLengthKnob->max = 30.0;
-            genLengthKnob->min = 0.4;
-            genLengthKnob->label = "Length";
-            genLengthKnob->setFontSize(fontsize);
-            genLengthKnob->setRadius(12.f * fScaleFactor);
-            genLengthKnob->gauge_width = 2.0f * fScaleFactor;
-            genLengthKnob->setValue(8);
-            genLengthKnob->resizeToFit();
-            genLengthKnob->onTop(genLengthPanel, CENTER, CENTER, padding);
-            genLengthKnob->setCallback(this);
-
-            genLengthLabel = new ValueIndicator(this);
-            genLengthLabel->setSize(70, 20);
-            genLengthLabel->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
-            genLengthLabel->setFontSize(fontsize);
-            genLengthLabel->above(genLengthKnob, CENTER, padding);
-            genLengthLabel->setValue(genLengthKnob->getValue());
-        }
-
-        // Temperature
-        {
-            temperaturePanel = new Panel(this);
-            temperaturePanel->setSize(knobW, knobH, true);
-            temperaturePanel->leftOf(genLengthPanel, START, padding);
-        
-            temperatureKnob = new Knob(this);
-            temperatureKnob->setName("Temperature");
-            temperatureKnob->max = 2.0;
-            temperatureKnob->min = 0.0;
-            temperatureKnob->label = "Temperature";
-            temperatureKnob->setFontSize(fontsize);
-            temperatureKnob->setRadius(12.f * fScaleFactor);
-            temperatureKnob->gauge_width = 3.0f * fScaleFactor;
-            temperatureKnob->setValue(0.7);
-            temperatureKnob->resizeToFit();
-            temperatureKnob->onTop(temperaturePanel, CENTER, CENTER, padding);
-            temperatureKnob->setCallback(this);
-
-            temperatureLabel = new ValueIndicator(this);
-            temperatureLabel->setSize(70, 20);
-            temperatureLabel->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
-            temperatureLabel->setFontSize(fontsize);
-            temperatureLabel->above(temperatureKnob, CENTER, padding);
-            temperatureLabel->setValue(temperatureKnob->getValue());
+            promptTempoLabel->onTop(promptTempoPanel, START, CENTER, 0);
+            promptTempo->rightOf(promptTempoLabel, CENTER, padding);
         }
 
         // nSamples
         {
             nSamplesPanel = new Panel(this);
-            nSamplesPanel->setSize(knobW, knobH, true);
-            nSamplesPanel->rightOf(genLengthPanel, START, padding);
+            nSamplesPanel->background_color = WaiveColors::bgGrey;
 
-            nSamplesKnob = new Knob(this);
-            nSamplesKnob->setName("Samples");
-            nSamplesKnob->max = 10;
-            nSamplesKnob->min = 1;
-            nSamplesKnob->label = "Samples";
-            nSamplesKnob->setFontSize(fontsize);
-            nSamplesKnob->setRadius(12.f * fScaleFactor);
-            nSamplesKnob->integer = true;
-            nSamplesKnob->gauge_width = 3.0f * fScaleFactor;
-            nSamplesKnob->setValue(1);
-            nSamplesKnob->resizeToFit();
-            nSamplesKnob->onTop(nSamplesPanel, CENTER, CENTER, padding);
-            nSamplesKnob->setCallback(this);
-
-            nSamplesLabel = new ValueIndicator(this);
-            nSamplesLabel->setSize(70, 20);
-            nSamplesLabel->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
+            nSamplesLabel = new Label(this, "Samples");
+            nSamplesLabel->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
             nSamplesLabel->setFontSize(fontsize);
-            nSamplesLabel->above(nSamplesKnob, CENTER, padding);
-            nSamplesLabel->setValue(nSamplesKnob->getValue());
+            nSamplesLabel->text_color = WaiveColors::text;
+            nSamplesLabel->resizeToFit();
+
+            nSamples = new NumberInput(this);
+            nSamples->text_color_greyed = WaiveColors::grey2;
+            nSamples->background_color = WaiveColors::numBoxColor;
+            nSamples->min = 1;
+            nSamples->max = 10;
+            nSamples->setText("1");
+            nSamples->align = Align::ALIGN_CENTER;
+            nSamples->setSize((generatePanel->getWidth() * 0.15) - (padding * 2.0f), numBoxHeight, true);
+            nSamples->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
+            nSamples->setFontSize(fontsize);
+            nSamples->setCallback(this);
+
+            nSamplesPanel->setSize(promptTempo->getWidth() + promptTempoLabel->getWidth(), numBoxHeight, true);
+            nSamplesPanel->below(hBox2, END, padding);
+            nSamplesPanel->setAbsolutePos(nSamplesPanel->getAbsoluteX() - (nSamplesPanel->getWidth() * 0.5f) + padding, nSamplesPanel->getAbsoluteY());
+
+            nSamplesLabel->onTop(nSamplesPanel, START, CENTER, 0);
+            nSamples->rightOf(nSamplesLabel, CENTER, padding);
+        }
+
+        // hBox3
+        {
+            hBox3 = new Panel(this);
+            hBox3->background_color = WaiveColors::bgGrey;
+            hBox3->setSize(promptInstrumentation->getWidth(), 25, true);
+            hBox3->below(sampleLengthPanel, START, padding);
+        }
+
+        // generate Button
+        {
+            generateButton = new Button(this);
+            generateButton->text_color = Color(255, 255, 255);
+            generateButton->background_color = WaiveColors::bgDark;
+            generateButton->highlight_color = WaiveColors::bgHighlight;
+            generateButton->setLabel("Generate");
+            generateButton->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
+            generateButton->setFontSize(fontsize);
+            generateButton->setSize((hBox3->getWidth()), buttonHeight, true);
+            generateButton->below(hBox3, START, padding);
+            generateButton->setCallback(this);
+        }
+
+        // hBox4
+        {
+            hBox4 = new Panel(this);
+            hBox4->background_color = WaiveColors::bgGrey;
+            hBox4->setSize(promptInstrumentation->getWidth(), 25, true);
+            hBox4->below(generateButton, START, padding);
         }
 
         // Advanced Options
         {
             advancedSettingsPanel = new Panel(this);
-            advancedSettingsPanel->setSize(promptPanel->getWidth() - (padding), 100, true);
-            advancedSettingsPanel->below(genLengthPanel, CENTER, padding);
-
+            advancedSettingsPanel->setSize(generatePanel->getWidth() - (padding), buttonHeight, true);
+            advancedSettingsPanel->below(hBox4, CENTER, padding);
+            advancedSettingsPanel->background_color = WaiveColors::bgGrey;
             
             advancedSettings = new Checkbox(this);
             advancedSettings->setSize(25, 25, true);
@@ -299,176 +290,297 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             advancedSettings->setChecked(false, false);
             advancedSettings->onTop(advancedSettingsPanel, START, CENTER, padding);
             advancedSettings->setCallback(this);
+            advancedSettings->highlight_color = WaiveColors::hiddenColor;
+            advancedSettings->accent_color = WaiveColors::highlight;
 
             advancedSettingsLabel = new Label(this, "Advanced Settings");
-            advancedSettingsLabel->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
+            advancedSettingsLabel->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
             advancedSettingsLabel->setFontSize(fontsize);
             advancedSettingsLabel->text_color = WaiveColors::text;
             advancedSettingsLabel->resizeToFit();
             advancedSettingsLabel->rightOf(advancedSettings, CENTER, padding);
-            
-            
-            // generate Button
-            {
-                generateButton = new Button(this);
-                generateButton->setLabel("Generate");
-                generateButton->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
-                generateButton->setFontSize(fontsize);
-                generateButton->resizeToFit();
-                generateButton->onTop(advancedSettingsPanel, END, CENTER, padding);
-                generateButton->setCallback(this);
-            }
 
             // Sample prompt Button
         }
 
-        controltPanelHeight += advancedSettingsPanel->getHeight();
-        controltPanelHeight += genLengthPanel->getHeight() * 6;
-
-        // Now add knobs of advanced
-        // Top P
+        // Hidden knobs
         {
-            topPPanel = new Panel(this);
-            topPPanel->setSize(knobW, knobH, true);
-            topPPanel->below(advancedSettingsPanel, CENTER, padding*4);
+            int knobW = 150;
+            int knobH = 150;
+            // Panel
+            {
+                knobsPanel = new Panel(this);
+                knobsPanel->background_color = WaiveColors::bgGrey;
+                knobsPanel->setSize(generatePanel->getWidth(), knobH, true);
+                knobsPanel->below(hBox4, START, padding);
+            }
 
-            topPKnob = new Knob(this);
-            topPKnob->setName("Top P");
-            topPKnob->max = 1.0;
-            topPKnob->min = 0.0;
-            topPKnob->label = "Top P";
-            topPKnob->setFontSize(fontsize);
-            topPKnob->setRadius(12.f * fScaleFactor);
-            topPKnob->gauge_width = 3.0f * fScaleFactor;
-            topPKnob->setValue(0.0);
-            topPKnob->resizeToFit();
-            topPKnob->onTop(topPPanel, CENTER, CENTER, padding);
-            topPKnob->setCallback(this);
+            // Temperature
+            {
+                temperaturePanel = new Panel(this);
+                temperaturePanel->setSize(knobW, knobH, true);
+                temperaturePanel->onTop(knobsPanel, START, START, padding);
+                temperaturePanel->background_color = WaiveColors::bgGrey;
+            
+                temperatureKnob = new Knob(this);
+                temperatureKnob->setName("Temperature");
+                temperatureKnob->max = 2.0;
+                temperatureKnob->min = 0.0;
+                temperatureKnob->label = "";
+                temperatureKnob->setFontSize(fontsize);
+                temperatureKnob->setRadius(14.f * fScaleFactor);
+                temperatureKnob->gauge_width = 4.0f;
+                temperatureKnob->setValue(0.7);
+                temperatureKnob->resizeToFit();
+                temperatureKnob->onTop(temperaturePanel, CENTER, CENTER, padding);
+                temperatureKnob->setCallback(this);
+                temperatureKnob->highlight_color = WaiveColors::text;
+                temperatureKnob->accent_color = WaiveColors::highlight;
+                temperatureKnob->foreground_color = WaiveColors::bgGrey;
 
-            topPLabel = new ValueIndicator(this);
-            topPLabel->setSize(70, 20);
-            topPLabel->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
-            topPLabel->setFontSize(fontsize);
-            topPLabel->above(topPKnob, CENTER, padding);
-            topPLabel->setValue(topPKnob->getValue());
+                temperatureUpLabel = new Label(this, "Temperature");
+                temperatureUpLabel->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
+                temperatureUpLabel->setFontSize(fontsize);
+                temperatureUpLabel->text_color = WaiveColors::text;
+                temperatureUpLabel->resizeToFit();
+                temperatureUpLabel->above(temperatureKnob, CENTER, padding);
 
-            topPPanel->setVisible(false);
-            topPKnob->setVisible(false);
-            topPLabel->setVisible(false);
-            topPPanel->hide();
-            topPKnob->hide();
-            topPLabel->hide();
-        }
-        // Top K
-        {
-            topKPanel = new Panel(this);
-            topKPanel->setSize(knobW, knobH, true);
-            topKPanel->leftOf(topPPanel, START, padding);
+                temperatureLabel = new ValueIndicator(this);
+                temperatureLabel->setSize(70, 20);
+                temperatureLabel->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
+                temperatureLabel->setFontSize(fontsize);
+                temperatureLabel->text_color = WaiveColors::text;
+                temperatureLabel->background_color = WaiveColors::bgGrey;
+                temperatureLabel->below(temperatureKnob, CENTER, padding);
+                temperatureLabel->setValue(temperatureKnob->getValue());
+            }
+
+            // topK
+            {
+                topKPanel = new Panel(this);
+                topKPanel->setSize(knobW, knobH, true);
+                topKPanel->rightOf(temperaturePanel, START, padding);
+                topKPanel->background_color = WaiveColors::bgGrey;
+            
+                topKKnob = new Knob(this);
+                topKKnob->setName("TopK");
+                topKKnob->min = 1;
+                topKKnob->max = 1000;
+                topKKnob->integer = true;
+                topKKnob->label = "";
+                topKKnob->setFontSize(fontsize);
+                topKKnob->setRadius(14.f * fScaleFactor);
+                topKKnob->gauge_width = 4.0f;
+                topKKnob->setValue(500);
+                topKKnob->resizeToFit();
+                topKKnob->onTop(topKPanel, CENTER, CENTER, padding);
+                topKKnob->setCallback(this);
+                topKKnob->highlight_color = WaiveColors::text;
+                topKKnob->accent_color = WaiveColors::highlight;
+                topKKnob->foreground_color = WaiveColors::bgGrey;
+
+                topKUpLabel = new Label(this, "Top K");
+                topKUpLabel->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
+                topKUpLabel->setFontSize(fontsize);
+                topKUpLabel->text_color = WaiveColors::text;
+                topKUpLabel->resizeToFit();
+                topKUpLabel->above(topKKnob, CENTER, padding);
+
+                topKLabel = new ValueIndicator(this);
+                topKLabel->setSize(70, 20);
+                topKLabel->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
+                topKLabel->setFontSize(fontsize);
+                topKLabel->text_color = WaiveColors::text;
+                topKLabel->background_color = WaiveColors::bgGrey;
+                topKLabel->below(topKKnob, CENTER, padding);
+                topKLabel->setValue(topKKnob->getValue());
+            }
+
+            // topP
+            {
+                topPPanel = new Panel(this);
+                topPPanel->setSize(knobW, knobH, true);
+                topPPanel->rightOf(topKPanel, START, padding);
+                topPPanel->background_color = WaiveColors::bgGrey;
+            
+                topPKnob = new Knob(this);
+                topPKnob->setName("TopP");
+                topPKnob->max = 1.0;
+                topPKnob->min = 0.0;
+                topPKnob->label = "";
+                topPKnob->setFontSize(fontsize);
+                topPKnob->setRadius(14.f * fScaleFactor);
+                topPKnob->gauge_width = 4.0f;
+                topPKnob->setValue(0.0);
+                topPKnob->resizeToFit();
+                topPKnob->onTop(topPPanel, CENTER, CENTER, padding);
+                topPKnob->setCallback(this);
+                topPKnob->highlight_color = WaiveColors::text;
+                topPKnob->accent_color = WaiveColors::highlight;
+                topPKnob->foreground_color = WaiveColors::bgGrey;
+
+                topPUpLabel = new Label(this, "Top P");
+                topPUpLabel->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
+                topPUpLabel->setFontSize(fontsize);
+                topPUpLabel->text_color = WaiveColors::text;
+                topPUpLabel->resizeToFit();
+                topPUpLabel->above(topPKnob, CENTER, padding);
+
+                topPLabel = new ValueIndicator(this);
+                topPLabel->setSize(70, 20);
+                topPLabel->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
+                topPLabel->setFontSize(fontsize);
+                topPLabel->text_color = WaiveColors::text;
+                topPLabel->background_color = WaiveColors::bgGrey;
+                topPLabel->below(topPKnob, CENTER, padding);
+                topPLabel->setValue(topPKnob->getValue());
+            }
+
+            // CFG
+            {
+                CFGPanel = new Panel(this);
+                CFGPanel->setSize(knobW, knobH, true);
+                CFGPanel->rightOf(topPPanel, START, padding);
+                CFGPanel->background_color = WaiveColors::bgGrey;
+            
+                CFGKnob = new Knob(this);
+                CFGKnob->setName("TopP");
+                CFGKnob->max = 10;
+                CFGKnob->min = 1;
+                CFGKnob->integer = true;
+                CFGKnob->label = "";
+                CFGKnob->setFontSize(fontsize);
+                CFGKnob->setRadius(14.f * fScaleFactor);
+                CFGKnob->gauge_width = 4.0f;
+                CFGKnob->setValue(5);
+                CFGKnob->resizeToFit();
+                CFGKnob->onTop(CFGPanel, CENTER, CENTER, padding);
+                CFGKnob->setCallback(this);
+                CFGKnob->highlight_color = WaiveColors::text;
+                CFGKnob->accent_color = WaiveColors::highlight;
+                CFGKnob->foreground_color = WaiveColors::bgGrey;
+
+                CFGUpLabel = new Label(this, "CFG");
+                CFGUpLabel->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
+                CFGUpLabel->setFontSize(fontsize);
+                CFGUpLabel->text_color = WaiveColors::text;
+                CFGUpLabel->resizeToFit();
+                CFGUpLabel->above(CFGKnob, CENTER, padding);
+
+                CFGLabel = new ValueIndicator(this);
+                CFGLabel->setSize(70, 20);
+                CFGLabel->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
+                CFGLabel->setFontSize(fontsize);
+                CFGLabel->text_color = WaiveColors::text;
+                CFGLabel->background_color = WaiveColors::bgGrey;
+                CFGLabel->below(CFGKnob, CENTER, padding);
+                CFGLabel->setValue(CFGKnob->getValue());
+            }
         
-            topKKnob = new Knob(this);
-            topKKnob->setName("Top K");
-            topKKnob->max = 1000;
-            topKKnob->min = 1;
-            topKKnob->integer = true;
-            topKKnob->label = "Top K";
-            topKKnob->setFontSize(fontsize);
-            topKKnob->setRadius(12.f * fScaleFactor);
-            topKKnob->gauge_width = 3.0f * fScaleFactor;
-            topKKnob->setValue(500);
-            topKKnob->resizeToFit();
-            topKKnob->onTop(topKPanel, CENTER, CENTER, padding);
-            topKKnob->setCallback(this);
+            knobsPanel->hide();
 
-            topKLabel = new ValueIndicator(this);
-            topKLabel->setSize(70, 20);
-            topKLabel->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
-            topKLabel->setFontSize(fontsize);
-            topKLabel->above(topKKnob, CENTER, padding);
-            topKLabel->setValue(topKKnob->getValue());
+            temperatureKnob->hide();
+            temperatureLabel->hide();
+            temperaturePanel->hide();
+            temperatureUpLabel->hide();
 
-            topKPanel->setVisible(false);
-            topKKnob->setVisible(false);
-            topKLabel->setVisible(false);
-            topKPanel->hide();
             topKKnob->hide();
             topKLabel->hide();
-        }
-        // CFG
-        {
-            CFGPanel = new Panel(this);
-            CFGPanel->setSize(knobW, knobH, true);
-            CFGPanel->rightOf(topPPanel, START, padding);
+            topKPanel->hide();
+            topKUpLabel->hide();
 
-            CFGKnob = new Knob(this);
-            CFGKnob->setName("CFG");
-            CFGKnob->max = 10;
-            CFGKnob->min = 1;
-            CFGKnob->label = "CFG";
-            CFGKnob->setFontSize(fontsize);
-            CFGKnob->setRadius(12.f * fScaleFactor);
-            CFGKnob->integer = true;
-            CFGKnob->gauge_width = 3.0f * fScaleFactor;
-            CFGKnob->setValue(5);
-            CFGKnob->resizeToFit();
-            CFGKnob->onTop(CFGPanel, CENTER, CENTER, padding);
-            CFGKnob->setCallback(this);
+            topPKnob->hide();
+            topPLabel->hide();
+            topPPanel->hide();
+            topPUpLabel->hide();
 
-            CFGLabel = new ValueIndicator(this);
-            CFGLabel->setSize(70, 20);
-            CFGLabel->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
-            CFGLabel->setFontSize(fontsize);
-            CFGLabel->above(CFGKnob, CENTER, padding);
-            CFGLabel->setValue(CFGKnob->getValue());
-
-            CFGPanel->setVisible(false);
-            CFGKnob->setVisible(false);
-            CFGLabel->setVisible(false);
-            CFGPanel->hide();
             CFGKnob->hide();
             CFGLabel->hide();
+            CFGPanel->hide();
+            CFGUpLabel->hide();
         }
-    
-        controlsPanel->setSize(controlsPanel->getWidth(), controltPanelHeight  - (padding * 2.0), true);
-        advancedSettings->setChecked(true, true);
-        advancedSettings->setChecked(false, true);
     }
     
+    // Height of prev elements
+    float sampleListHeight = generateButton->getHeight() + generateButton->getAbsoluteY() - importButton->getAbsoluteY();
+    // Right side of the screen
     {
+        // Main panel
         {
             samplesListPanel = new Panel(this);
-            samplesListPanel->setSize((width * 0.5f * 0.5f) - padding, (height * 0.5f) - (padding * 2.0), true);
-            samplesListPanel->setAbsolutePos(generatePanel->getWidth() + (padding * 2.0), padding);
+            samplesListPanel->setSize((width * 0.5f * 0.5f), (height * 0.5f), true);
+            samplesListPanel->setAbsolutePos(generatePanel->getWidth(), 0);
+            samplesListPanel->background_color = WaiveColors::bgGrey;
+        }
 
+        // Inner panel
+        {
+            samplesListInner = new Panel(this);
+            samplesListInner->setSize((width * 0.5f * 0.5f) - (padding * 2), sampleListHeight, true);
+            samplesListInner->onTop(samplesListPanel, CENTER, START, importButton->getAbsoluteY());
+            samplesListInner->background_color = WaiveColors::numBoxColor;
+        }
+
+        // hBox4
+        {
+            hBox5 = new Panel(this);
+            hBox5->background_color = WaiveColors::bgGrey;
+            hBox5->setSize(promptInstrumentation->getWidth(), 25, true);
+            hBox5->below(samplesListInner, START, padding);
+        }
+
+        // Open Folder Button
+        {
             openFolderButton = new Button(this);
-            openFolderButton->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
-            openFolderButton->setLabel("Open Generate Folder");
+            openFolderButton->text_color = Color(255, 255, 255);
+            openFolderButton->background_color = WaiveColors::bgDark;
+            openFolderButton->highlight_color = WaiveColors::bgHighlight;
+            openFolderButton->setLabel("Local Files");
+            openFolderButton->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
             openFolderButton->setFontSize(fontsize);
             openFolderButton->resizeToFit();
-            openFolderButton->onTop(samplesListPanel, CENTER, END, padding);
+            openFolderButton->below(hBox5, END, padding);
             openFolderButton->setCallback(this);
+        }
 
-            samplesListInner = new Panel(this);
-            samplesListInner->setSize((width * 0.5f * 0.5f) - (padding * 2), ((27 * getScaleFactor()) * 10 + padding * 11), true);
-            samplesListInner->onTop(samplesListPanel, CENTER, START, padding);
-            samplesListInner->background_color = WaiveColors::dark;
-
+        // Load samples
+        {
             // Loop over it change the positioning to take into account the scroll top etc.
+            float button_height = ((samplesListInner->getHeight() * 0.5f) / 10.0f);
             for(int i = 0; i < 10; i++) {
-                addSampleToPanel(padding, std::string("test"));
+                addSampleToPanel(padding, std::string("test"), button_height);
                 // if(samplePanels.size() > 12){
                 //     scrollBar->setSize((padding * 2), round(static_cast<float>(scrollBarHeight) * ((12.0) / static_cast<float>(samplePanels.size()))), true);
                 // }
             }
+        }
 
-            // sampleButtons
-            // samplesRemove
+        {
+            localOnlineSwitch = new Checkbox(this);
+            localOnlineSwitch->setSize(25, 25, true);
+            localOnlineSwitch->background_color = WaiveColors::text;
+            localOnlineSwitch->foreground_color = WaiveColors::text;
+            localOnlineSwitch->setChecked(false, false);
+            localOnlineSwitch->onTop(samplesListPanel, END, END, padding);
+            localOnlineSwitch->setCallback(this);
+            localOnlineSwitch->highlight_color = WaiveColors::hiddenColor;
+            localOnlineSwitch->accent_color = WaiveColors::highlight;
+
+            localOnlineSwitchLabel = new Label(this, "Use local server");
+            localOnlineSwitchLabel->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
+            localOnlineSwitchLabel->setFontSize(fontsize);
+            localOnlineSwitchLabel->text_color = WaiveColors::text;
+            localOnlineSwitchLabel->resizeToFit();
+            localOnlineSwitchLabel->leftOf(localOnlineSwitch, CENTER, padding);
+            localOnlineSwitch->hide();
+            localOnlineSwitchLabel->hide();
         }
     }
 
     {
         loaderPanel = new Panel(this);
-        loaderPanel->setSize((width * 0.5f) - (padding * 2.0), (height * 0.5f) - (padding * 2.0), true);
-        loaderPanel->setAbsolutePos(padding, padding);
+        loaderPanel->setSize((width * 0.5f), (height * 0.5f), true);
+        loaderPanel->setAbsolutePos(0, 0);
         loaderPanel->toFront();
 
         static const Color bg_col(35, 35, 37, 0.5);
@@ -476,7 +588,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
         loaderPanel->hide();
 
         loaderSpinner = new Label(this, " ");
-        loaderSpinner->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
+        loaderSpinner->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
         loaderSpinner->setFontSize(fontsize * 4.0f);
         loaderSpinner->text_color = WaiveColors::text;
         loaderSpinner->resizeToFit();
@@ -495,7 +607,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
         popupPanel->hide();
 
         popupLabel = new Label(this, "Oke");
-        popupLabel->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
+        popupLabel->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
         popupLabel->setFontSize(fontsize);
         popupLabel->text_color = WaiveColors::text;
         popupLabel->resizeToFit();
@@ -503,7 +615,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
         popupLabel->hide();
 
         popupButton = new Button(this);
-        popupButton->setFont("Poppins-Light", Poppins_Light, Poppins_Light_len);
+        popupButton->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
         popupButton->setLabel("Ok");
         popupButton->setFontSize(fontsize);
         popupButton->resizeToFit();
@@ -511,6 +623,9 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
         popupButton->setCallback(this);
         popupButton->hide();
     }
+
+    // advancedSettings->setChecked(true, true);
+    // advancedSettings->setChecked(false, true);
 }
 
 MusicGenUI::~MusicGenUI()
@@ -581,16 +696,16 @@ void MusicGenUI::generateFn(std::atomic<bool>& done)
         ip = "http://127.0.0.1:55000/";
     }
 
-    float duration = genLengthKnob->getValue();
+    float duration = std::stof(sampleLength->getText());
     float temperature = temperatureKnob->getValue();
     float topp = topPKnob->getValue();
-    int samples = nSamplesKnob->getValue();
+    int samples = std::stoi(nSamples->getText());
     int topk = topKKnob->getValue();
     int CFG = CFGKnob->getValue();
     std::string prompt = textPrompt->getText();
     prompt.append(" ");
     prompt.append(promptTempo->getText());
-    prompt.append(" ");
+    prompt.append(" BPM ");
     prompt.append(promptInstrumentation->getText());
 
     // Make a request
@@ -722,7 +837,6 @@ void MusicGenUI::generateFn(std::atomic<bool>& done)
     // Download the files into the generated folder   
     if(curl && !crashed) {
         for(std::size_t i = 0; i < samplePanels.size(); i++){
-            samplePanels[i]->hide();
             sampleButtons[i]->hide();
         }
         std::string readBuffer;
@@ -756,10 +870,8 @@ void MusicGenUI::generateFn(std::atomic<bool>& done)
 
             outFile.close();
 
-            samplePanels[i]->show();
             sampleButtons[i]->setLabel(datetime);
             sampleButtons[i]->show();
-
             i++;
         }
     }
@@ -884,10 +996,6 @@ void MusicGenUI::knobDragStarted(Knob *knob)
     if(!loaderPanel->isVisible()){
         if (knob == temperatureKnob){
             temperatureLabel->setValue(knob->getValue());
-        } else if (knob == genLengthKnob){
-            genLengthLabel->setValue(knob->getValue());
-        } else if (knob == nSamplesKnob){
-            nSamplesLabel->setValue(knob->getValue());
         } else if (knob == topKKnob){
             topKLabel->setValue(knob->getValue());
         } else if (knob == topPKnob){
@@ -908,10 +1016,6 @@ void MusicGenUI::knobValueChanged(Knob *knob, float value)
     if(!loaderPanel->isVisible()){
         if (knob == temperatureKnob){
             temperatureLabel->setValue(knob->getValue());
-        } else if (knob == genLengthKnob){
-            genLengthLabel->setValue(knob->getValue());
-        } else if (knob == nSamplesKnob){
-            nSamplesLabel->setValue(knob->getValue());
         } else if (knob == topKKnob){
             topKLabel->setValue(knob->getValue());
         } else if (knob == topPKnob){
@@ -931,61 +1035,90 @@ void MusicGenUI::textInputChanged(TextInput *textInput, std::string text)
     
 }
 
+void MusicGenUI::textEntered(NumberInput *numberInput, std::string text){
+
+}
+
+void MusicGenUI::textInputChanged(NumberInput *numberInput, std::string text)
+{
+    
+}
+
 void MusicGenUI::checkboxUpdated(Checkbox *checkbox, bool value)
 {
-    float padding = 4.f * fScaleFactor;
-    float width = UI_W * fScaleFactor;
-    float height = UI_H * fScaleFactor;
-
+    float padding = 4.f * 2.0f;
     if(checkbox == advancedSettings){
         if(value == true){
-            promptPanel->setSize(generatePanel->getWidth() - (padding * 2.0), (generatePanel->getHeight() * 0.4) - (padding * 2.0), true);
-            controlsPanel->setSize(promptPanel->getWidth(), (generatePanel->getHeight() * 0.6f) - padding, true);
+            setSize(UI_W, UI_H + 150);
 
-            topKPanel->setVisible(true);
-            topKKnob->setVisible(true);
-            topKLabel->setVisible(true);
-            topKPanel->show();
+            generatePanel->setSize(generatePanel->getWidth(), (generatePanel->getHeight()) + 150, true);
+            samplesListPanel->setSize(samplesListPanel->getWidth(), (samplesListPanel->getHeight()) + 150, true);
+            loaderPanel->setSize(loaderPanel->getWidth(), (loaderPanel->getHeight()) + 150, true);
+            localOnlineSwitch->onTop(samplesListPanel, END, END, padding);
+            localOnlineSwitchLabel->leftOf(localOnlineSwitch, CENTER, padding);
+
+            advancedSettingsPanel->below(knobsPanel, CENTER, padding);
+            advancedSettings->onTop(advancedSettingsPanel, START, CENTER, padding);
+            advancedSettingsLabel->rightOf(advancedSettings, CENTER, padding);
+
+            knobsPanel->show();
+
+            temperatureKnob->show();
+            temperatureLabel->show();
+            temperaturePanel->show();
+            temperatureUpLabel->show();
+
             topKKnob->show();
             topKLabel->show();
+            topKPanel->show();
+            topKUpLabel->show();
 
-            topPPanel->show();
             topPKnob->show();
             topPLabel->show();
+            topPPanel->show();
+            topPUpLabel->show();
 
-            CFGPanel->setVisible(true);
-            CFGKnob->setVisible(true);
-            CFGLabel->setVisible(true);
-            CFGPanel->show();
             CFGKnob->show();
             CFGLabel->show();
+            CFGPanel->show();
+            CFGUpLabel->show();
+
 
             localOnlineSwitch->show();
             localOnlineSwitchLabel->show();
         } else {
-            promptPanel->setSize(generatePanel->getWidth() - (padding * 2.0), (generatePanel->getHeight() * 0.4) - (padding * 2.0), true);
-            controlsPanel->setSize(promptPanel->getWidth(), (generatePanel->getHeight() * 0.6f) - padding, true);
+            setSize(UI_W, UI_H);
+            advancedSettingsPanel->below(hBox4, CENTER, padding);
+            advancedSettings->onTop(advancedSettingsPanel, START, CENTER, padding);
+            advancedSettingsLabel->rightOf(advancedSettings, CENTER, padding);
 
-            topKPanel->setVisible(false);
-            topKKnob->setVisible(false);
-            topKLabel->setVisible(false);
-            topKPanel->hide();
+            generatePanel->setSize(generatePanel->getWidth(), (generatePanel->getHeight()) - 150, true);
+            samplesListPanel->setSize(samplesListPanel->getWidth(), (samplesListPanel->getHeight()) - 150, true);
+            loaderPanel->setSize(loaderPanel->getWidth(), (loaderPanel->getHeight()) - 150, true);
+            localOnlineSwitch->onTop(samplesListPanel, END, END, padding);
+            localOnlineSwitchLabel->leftOf(localOnlineSwitch, CENTER, padding);
+
+            knobsPanel->hide();
+
+            temperatureKnob->hide();
+            temperatureLabel->hide();
+            temperaturePanel->hide();
+            temperatureUpLabel->hide();
+
             topKKnob->hide();
             topKLabel->hide();
+            topKPanel->hide();
+            topKUpLabel->hide();
 
-            topPPanel->setVisible(false);
-            topPKnob->setVisible(false);
-            topPLabel->setVisible(false);
-            topPPanel->hide();
             topPKnob->hide();
             topPLabel->hide();
+            topPPanel->hide();
+            topPUpLabel->hide();
 
-            CFGPanel->setVisible(false);
-            CFGKnob->setVisible(false);
-            CFGLabel->setVisible(false);
-            CFGPanel->hide();
             CFGKnob->hide();
             CFGLabel->hide();
+            CFGPanel->hide();
+            CFGUpLabel->hide();
 
             localOnlineSwitch->hide();
             localOnlineSwitchLabel->hide();
@@ -1000,27 +1133,45 @@ void MusicGenUI::checkboxUpdated(Checkbox *checkbox, bool value)
     repaint();
 }
 
-void MusicGenUI::addSampleToPanel(float padding, std::string name)
+void MusicGenUI::addSampleToPanel(float padding, std::string name, float button_height)
 {
-    int h = 27 * fscaleMult;
+    float h = std::ceil(button_height) * fscaleMult;
+    // Init the holding panel
     samplePanels.push_back(new Panel(this));
-    samplePanels.back()->setSize((samplesListInner->getWidth() * 0.5f * fscaleMult) - (padding * fscaleMult), h);
-    samplePanels.back()->background_color = WaiveColors::grey2;
-    if(samplePanels.size() == 1){
-        samplePanels.back()->onTop(samplesListInner, START, START, padding);
-        samplePanels.back()->setAbsolutePos(samplesListInner->getAbsoluteX() + padding, samplesListInner->getAbsoluteY() + padding + yOffset);
+    samplePanels.back()->setSize((samplesListInner->getWidth() * 0.5f * fscaleMult), h);
+    if(samplePanels.size() % 2 == 1){
+        samplePanels.back()->background_color = WaiveColors::sampleColor1;
     } else {
-        samplePanels.back()->below(samplePanels[samplePanels.size()-2], CENTER, padding);
+        samplePanels.back()->background_color = WaiveColors::sampleColor2;
     }
+    if(samplePanels.size() == 1){
+        samplePanels.back()->onTop(samplesListInner, START, START, 0);
+    } else {
+        samplePanels.back()->below(samplePanels[samplePanels.size()-2], START, 0);
+    }
+    
     sampleButtons.push_back(new Button(this));
+    sampleButtons.back()->sqrt = true;
     sampleButtons.back()->setSize((samplePanels.back()->getWidth() * 0.5 * fscaleMult), h);
     sampleButtons.back()->setLabel(name);
-    sampleButtons.back()->textAlign(Align::ALIGN_LEFT); // Fix in the header of the button to change the text alignment
-    sampleButtons.back()->background_color = WaiveColors::grey2;
+    sampleButtons.back()->background_color = WaiveColors::hiddenColor;
+    sampleButtons.back()->highlight_color = WaiveColors::highlight;
     sampleButtons.back()->onTop(samplePanels.back(), START, START, 0);
     sampleButtons.back()->setCallback(this);
 
-    samplePanels.back()->hide();
+    sampleLabelWrappers.push_back(new Panel(this));
+    sampleLabelWrappers.back()->background_color = WaiveColors::hiddenColor;
+    sampleLabelWrappers.back()->setSize(samplePanels.back()->getWidth() * 0.5f * 0.1f, h);
+    sampleLabelWrappers.back()->onTop(samplePanels.back(), START, START, 0);
+
+    sampleLabels.push_back(new Label(this, std::to_string(sampleLabels.size() + 1)));
+    sampleLabels.back()->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
+    sampleLabels.back()->setFontSize(fontsize);
+    sampleLabels.back()->text_color = WaiveColors::text;
+    sampleLabels.back()->background_color = WaiveColors::hiddenColor;
+    sampleLabels.back()->resizeToFit();
+    sampleLabels.back()->onTop(sampleLabelWrappers.back(), CENTER, CENTER, 0);
+
     sampleButtons.back()->hide();
 
     // samplesRemove.push_back(new Button(this));

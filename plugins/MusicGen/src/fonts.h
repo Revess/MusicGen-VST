@@ -3,5 +3,6 @@
 
 #include "vg5000.h"
 #include "poppins-light.h"
+#include "space-grotesk.h"
 
 #endif

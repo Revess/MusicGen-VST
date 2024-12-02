@@ -1,10 +1,17 @@
-#include "TextInput.hpp"
+#include "NumberInput.hpp"
 
 START_NAMESPACE_DISTRHO
 
 using DGL_NAMESPACE::Color;
 
-TextInput::TextInput(Widget *parent) noexcept
+std::string floatToStringWithPrecision(float value, int precision) {
+    std::ostringstream oss;
+    oss.precision(precision);
+    oss << std::fixed << value; // Convert float to string with specified precision
+    return oss.str();
+}
+
+NumberInput::NumberInput(Widget *parent) noexcept
     : WAIVEWidget(parent),
       hasKeyFocus(false),
       hover(false),
@@ -16,13 +23,13 @@ TextInput::TextInput(Widget *parent) noexcept
 {
 }
 
-void TextInput::setPlaceholder(const char *newText, bool sendCallback)
+void NumberInput::setPlaceholder(const char *newText, bool sendCallback)
 {
     placeholder = newText;
     setText(newText, sendCallback);
 }
 
-void TextInput::setText(const char *newText, bool sendCallback)
+void NumberInput::setText(const char *newText, bool sendCallback)
 {
     textValue.assign(newText);
     position = textValue.size();
@@ -33,12 +40,12 @@ void TextInput::setText(const char *newText, bool sendCallback)
     repaint();
 }
 
-std::string TextInput::getText()
+std::string NumberInput::getText()
 {
     return textValue;
 }
 
-void TextInput::undo()
+void NumberInput::undo()
 {
     // In case the text is invalid by reciever of callback,
     // can revert the text back to it's original
@@ -48,24 +55,27 @@ void TextInput::undo()
     repaint();
 }
 
-void TextInput::onNanoDisplay()
+void NumberInput::onNanoDisplay()
 {
     const float width = getWidth();
     const float height = getHeight();
 
-    // beginPath();
-    // fillColor(background_color);
-    // rect(0, 0, width, height);
-    // fill();
-    // closePath();
-
     beginPath();
     strokeColor(text_color);
     strokeWidth(3.0f);
-    moveTo(0, height);
-    lineTo(width, height);
+    fillColor(background_color);
+    rect(0, 0, width, height);
+    fill();
     stroke();
     closePath();
+
+    // beginPath();
+    // strokeColor(text_color);
+    // strokeWidth(3.0f);
+    // moveTo(0, height);
+    // lineTo(width, height);
+    // stroke();
+    // closePath();
 
     Rectangle<float> bounds;
 
@@ -135,10 +145,17 @@ void TextInput::onNanoDisplay()
     }
 }
 
-bool TextInput::onCharacterInput(const CharacterInputEvent &ev)
+bool NumberInput::onCharacterInput(const CharacterInputEvent &ev)
 {
+    // std::cout << "TextInput::onCharacterInput: ev.keycode = " << ev.keycode << std::endl;
     if (!hasKeyFocus || !isVisible())
         return false;
+
+    if (std::isdigit(ev.string[0]) || ev.keycode == 47) { //  || ev.keycode == 43 for comma
+
+    } else {
+        return false;
+    }
 
     // std::cout << "TextInput::onCharacterInput: ev.keycode = " << ev.keycode << std::endl;
 
@@ -168,11 +185,24 @@ bool TextInput::onCharacterInput(const CharacterInputEvent &ev)
     if (callback != nullptr)
         callback->textInputChanged(this, textValue);
 
+    if (std::stof(textValue) < min) {
+        textValue = floatToStringWithPrecision(min, 2);
+        position = textValue.size();
+    }
+
+    if (std::stof(textValue) > max) {
+        textValue = floatToStringWithPrecision(max, 2);
+        position = textValue.size();
+    }
+
+    textValue = floatToStringWithPrecision(std::stof(textValue), 2);
+    position = textValue.size();
+
     repaint();
     return true;
 }
 
-bool TextInput::onKeyboard(const KeyboardEvent &ev)
+bool NumberInput::onKeyboard(const KeyboardEvent &ev)
 {
     if (!hasKeyFocus || !ev.press)
         return false;
@@ -227,7 +257,7 @@ bool TextInput::onKeyboard(const KeyboardEvent &ev)
     return true;
 }
 
-bool TextInput::onMouse(const MouseEvent &ev)
+bool NumberInput::onMouse(const MouseEvent &ev)
 {
     if (!isVisible())
         return false;
@@ -263,7 +293,7 @@ bool TextInput::onMouse(const MouseEvent &ev)
     return false;
 }
 
-bool TextInput::onMotion(const MotionEvent &ev)
+bool NumberInput::onMotion(const MotionEvent &ev)
 {
     if (!isVisible())
         return false;
@@ -285,7 +315,7 @@ bool TextInput::onMotion(const MotionEvent &ev)
     return false;
 }
 
-void TextInput::setCallback(Callback *cb)
+void NumberInput::setCallback(Callback *cb)
 {
     callback = cb;
 }

@@ -18,8 +18,8 @@ elif [ "$UNAME_S" = "Darwin" ]; then
     elif [ "$UNAME_M" = "arm64" ]; then
         arch -arm64 make 
         echo "Running on macOS arm64"
-        sudo cp -r ../../bin/MusicGenVST.vst ../../vst2/MusicGenVST.vst
-        sudo cp -r ../../bin/MusicGenVST.vst3 ../../vst3/MusicGenVST.vst3
+        # sudo cp -r ../../bin/MusicGenVST.vst ../../vst2/MusicGenVST.vst
+        # sudo cp -r ../../bin/MusicGenVST.vst3 ../../vst3/MusicGenVST.vst3
         arch -arm64 ../../bin/MusicGenVST.app/Contents/MacOS/MusicGenVST
     fi
 elif [ "$OS" = "Windows_NT" ]; then

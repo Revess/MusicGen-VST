@@ -10,12 +10,6 @@ class Panel : public WidgetGroup
 public:
     Panel(Widget *widget);
 
-    std::string title;
-    std::string label;
-
-    float padding;
-    float radius;
-
 protected:
     void onNanoDisplay() override;
 

@@ -32,6 +32,7 @@ FILES_UI  = \
 	./src/SimpleButton.cpp \
 	./src/Knob.cpp \
 	./src/TextInput.cpp \
+	./src/NumberInput.cpp \
 	./src/Panel.cpp \
 	./src/Label.cpp \
 	./src/Checkbox.cpp \

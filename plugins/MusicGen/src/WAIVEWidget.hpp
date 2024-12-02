@@ -44,6 +44,7 @@ public:
     // Color values
     Color background_color, foreground_color, highlight_color, accent_color;
     Color text_color;
+    Color text_color_greyed;
     FontId font;
 
     bool renderDebug;

@@ -30,6 +30,7 @@ public:
 
     bool drawBackground;
     bool isToggle;
+    bool sqrt = false;
 
 protected:
     void onNanoDisplay() override;

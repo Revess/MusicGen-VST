@@ -70,7 +70,11 @@ void Button::onNanoDisplay()
             fillColor(accent_color);
         else
             fillColor(fHasFocus ? highlight_color : background_color);
-        roundedRect(margin, margin, width - 2 * margin, height - 2 * margin, height * 0.25f);
+        if(!sqrt){
+            roundedRect(margin, margin, width - 2 * margin, height - 2 * margin, height * 0.5f);
+        } else {
+            rect(margin, margin, width - 2 * margin, height - 2 * margin);
+        }
         fill();
         closePath();
     }
@@ -88,7 +92,11 @@ void Button::onNanoDisplay()
     {
         beginPath();
         fillColor(0.f, 0.f, 0.f, 0.5f);
-        roundedRect(margin, margin, width - 2 * margin, height - 2 * margin, height * 0.25f);
+        if(!sqrt){
+            roundedRect(margin, margin, width - 2 * margin, height - 2 * margin, height * 0.5f);
+        } else {
+            rect(margin, margin, width - 2 * margin, height - 2 * margin);
+        }
         fill();
         closePath();
     }

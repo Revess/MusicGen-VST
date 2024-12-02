@@ -27,6 +27,7 @@
 #include "./src/Knob.hpp"
 #include "./src/Panel.hpp"
 #include "./src/TextInput.hpp"
+#include "./src/NumberInput.hpp"
 #include "./src/WAIVEColors.hpp"
 #include "./src/Label.hpp"
 #include "./src/ValueIndicator.hpp"
@@ -36,14 +37,15 @@
 
 START_NAMESPACE_DISTRHO
 
-const unsigned int UI_W = 1500;
-const unsigned int UI_H = 800;
+const unsigned int UI_W = 1300;
+const unsigned int UI_H = 550;
 
 class MusicGenUI : public UI,
                    public DGL::Button::Callback,
                    public Knob::Callback,
                    public Checkbox::Callback,
-                   public TextInput::Callback
+                   public TextInput::Callback,
+                   public NumberInput::Callback
 {
 public:
     MusicGenUI();
@@ -68,9 +70,12 @@ protected:
     void textEntered(TextInput *textInput, std::string text) override;
     void textInputChanged(TextInput *textInput, std::string text) override;
 
+    void textEntered(NumberInput *numberInput, std::string text) override;
+    void textInputChanged(NumberInput *numberInput, std::string text) override;
+
     void checkboxUpdated(Checkbox *checkbox, bool value) override;
 
-    void addSampleToPanel(float padding, std::string name);
+    void addSampleToPanel(float padding, std::string name, float button_height);
 
     void generateFn(std::atomic<bool>& done);
     void loaderAnim(std::atomic<bool>& done);
@@ -81,51 +86,78 @@ protected:
 private:
     MusicGen *plugin;
 
-    Checkbox *localOnlineSwitch;
-    Label *localOnlineSwitchLabel;
-
+    // Still in Use
+    // Lose Panels
+    Panel *importPanel;
     Panel *generatePanel;
-    Panel *promptPanel;
-    Panel *controlsPanel;
+    Panel *knobsPanel;
 
+    // Buttons
+    Button *importButton;
+    Button *clearImportedSample;
+    Button *generateButton;
+    Button *openFolderButton;
+
+    // text inputs
     TextInput *textPrompt;
-    TextInput *promptTempo;
     TextInput *promptInstrumentation;
 
-    Label *textPromptLabel;
-    Label *promptTempoLabel;
-    Label *promptInstrumentationLabel;
+    Label *loadedFile;
+    Label *loaderSpinner;
 
+    // HBoxes
+    Panel *hBox1;
+    Panel *hBox2;
+    Panel *hBox3;
+    Panel *hBox4;
+    Panel *hBox5;
+
+    Panel *sampleLengthPanel;
+    Label *sampleLengthLabel;
+    NumberInput *sampleLength;
+
+    Panel *promptTempoPanel;
+    Label *promptTempoLabel;
+    NumberInput *promptTempo;
+
+    Panel *nSamplesPanel;
+    Label *nSamplesLabel;
+    NumberInput *nSamples;
+
+    // Knobs
     Panel *temperaturePanel;
     Knob *temperatureKnob;
+    Label *temperatureUpLabel;
     ValueIndicator *temperatureLabel;
-    Panel *nSamplesPanel;
-    Knob *nSamplesKnob;
-    ValueIndicator *nSamplesLabel;
-    Panel *genLengthPanel;
-    Knob *genLengthKnob;
-    ValueIndicator *genLengthLabel;
+
+    Panel *topKPanel;
+    Knob *topKKnob;
+    Label *topPUpLabel;
+    ValueIndicator *topKLabel;
+
+    Panel *topPPanel;
+    Knob *topPKnob;
+    Label *topKUpLabel;
+    ValueIndicator *topPLabel;
+
+    Panel *CFGPanel;
+    Knob *CFGKnob;
+    Label *CFGUpLabel;
+    ValueIndicator *CFGLabel;
 
     Checkbox *advancedSettings;
     Panel *advancedSettingsPanel;
     Label *advancedSettingsLabel;
 
-    Panel *topKPanel;
-    Knob *topKKnob;
-    ValueIndicator *topKLabel;
-    Panel *topPPanel;
-    Knob *topPKnob;
-    ValueIndicator *topPLabel;
-    Panel *CFGPanel;
-    Knob *CFGKnob;
-    ValueIndicator *CFGLabel;
+    std::vector<Panel*> samplePanels;
+    std::vector<Button*> sampleButtons;
+    std::vector<Label*> sampleLabels;
+    std::vector<Panel*> sampleLabelWrappers;
+    std::vector<Button*> samplesRemove;
 
-    Button *generateButton;
-    Button *openFolderButton;
-    Button *importButton;
-    Button *clearImportedSample;
-    Label *loadedFile;
-    Label *loaderSpinner;
+    // Pending if in Use
+    Checkbox *localOnlineSwitch;
+    Label *localOnlineSwitchLabel;
 
     Panel *samplesListPanel;
     Panel *samplesListInner;
@@ -134,10 +166,6 @@ private:
     Panel *popupPanel;
     Button *popupButton;
     Label *popupLabel;
-
-    std::vector<Panel*> samplePanels;
-    std::vector<Button*> sampleButtons;
-    std::vector<Button*> samplesRemove;
 
     std::string userid = "undefined";
 
@@ -149,6 +177,7 @@ private:
     int yOffset = 0;
     int butt_down = -1;
     bool startedDragging = false;
+    float fontsize = 0.0;
     std::string current_dragging_path = "";
     std::condition_variable cv;
     std::string selectedFile = "";
