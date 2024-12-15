@@ -6,13 +6,13 @@ export PKG_CONFIG_PATH="/opt/homebrew/opt/qt/lib/pkgconfig:$PKG_CONFIG_PATH"
 
 if [ "$UNAME_S" = "Linux" ]; then
     make 
-    sudo rm -rf ../../vst2/MusicGenVST.vst
-    sudo cp -r ../../bin/MusicGenVST.vst ../../vst2/MusicGenVST.vst
+    sudo rm -rf ../../vst2/MusicGenVST-vst.so
+    sudo cp -r ../../bin/MusicGenVST-vst.so ../../vst2/MusicGenVST-vst.so
     rm -rf ../../vst3/MusicGenVST.vst3
     sudo cp -r ../../bin/MusicGenVST.vst3 ../../vst3/MusicGenVST.vst3
     ../../bin/MusicGenVST
-    zip -r ../../release/standalone-x86_64-linux.zip ../../bin/MusicGenVST.app
-    zip -r ../../release/vst2-x86_64-linux.zip ../../bin/MusicGenVST.vst
+    zip -r ../../release/standalone-x86_64-linux.zip ../../bin/MusicGenVST
+    zip -r ../../release/vst2-x86_64-linux.zip ../../bin/MusicGenVST-vst.so
     zip -r ../../release/vst3-x86_64-linux.zip ../../bin/MusicGenVST.vst3
 elif [ "$UNAME_S" = "Darwin" ]; then
     if [ "$UNAME_M" = "x86_64" ]; then

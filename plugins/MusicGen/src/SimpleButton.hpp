@@ -33,7 +33,6 @@ public:
     bool isToggle;
     bool sqrt = false;
     bool hasContextFN = false;
-    std::function<void()> contextFn;
     float radius = 0;
     std::string filename = "";
 
