@@ -59,6 +59,16 @@ void NumberInput::onNanoDisplay()
 {
     const float width = getWidth();
     const float height = getHeight();
+    if(position > 0){
+        textValue = floatToStringWithPrecision(std::stof(textValue), precision);
+    }
+
+    if (!hasKeyFocus) {
+        if(position == 0){
+            textValue = floatToStringWithPrecision(min, precision);
+            position = textValue.size();
+        }
+    }
 
     beginPath();
     strokeColor(text_color);
@@ -100,9 +110,7 @@ void NumberInput::onNanoDisplay()
         textAlign(ALIGN_LEFT | ALIGN_TOP);
         text(bounds.getX(), bounds.getY(), textValue.c_str(), nullptr);
         closePath();
-    }
-    else
-    {
+    } else {
         if (align == Align::ALIGN_CENTER)
             bounds.setX(width / 2);
         else if (align == Align::ALIGN_LEFT)
@@ -111,15 +119,16 @@ void NumberInput::onNanoDisplay()
             bounds.setX(width - 2);
     }
 
-    if (!hasKeyFocus)
+    if (!hasKeyFocus) {
         return;
+    }
     float tv = textValue.size();
     float ps = position;
     if (tv == 0) {
         textValue.assign("1");
         position = textValue.size();
     }
-
+ 
     // draw cursor
     beginPath();
     textAlign(ALIGN_MIDDLE | ALIGN_LEFT);
@@ -157,8 +166,6 @@ bool NumberInput::onCharacterInput(const CharacterInputEvent &ev)
         return false;
     }
 
-    // std::cout << "TextInput::onCharacterInput: ev.keycode = " << ev.keycode << std::endl;
-
     switch (ev.keycode)
     {
     case 36:
@@ -182,21 +189,21 @@ bool NumberInput::onCharacterInput(const CharacterInputEvent &ev)
         break;
     }
 
-    if (callback != nullptr)
-        callback->textInputChanged(this, textValue);
-
     if (std::stof(textValue) < min) {
-        textValue = floatToStringWithPrecision(min, 2);
+        textValue = floatToStringWithPrecision(min, precision);
         position = textValue.size();
     }
 
     if (std::stof(textValue) > max) {
-        textValue = floatToStringWithPrecision(max, 2);
+        textValue = floatToStringWithPrecision(max, precision);
         position = textValue.size();
     }
 
-    textValue = floatToStringWithPrecision(std::stof(textValue), 2);
+    textValue = floatToStringWithPrecision(std::stof(textValue), precision);
     position = textValue.size();
+
+    if (callback != nullptr)
+        callback->textInputChanged(this, textValue);
 
     repaint();
     return true;
@@ -207,10 +214,29 @@ bool NumberInput::onKeyboard(const KeyboardEvent &ev)
     if (!hasKeyFocus || !ev.press)
         return false;
 
+    float p = 0;
+    if(precision == 0){
+        p = 1;
+    } else {
+        p = precision * 10;
+    }
+
     // std::cout << ev.key <<std::endl;
 
     switch (ev.key)
     {
+    case kKeyUp:
+        if(std::stof(textValue) + (1 / p) > max || std::stof(textValue) + (1 / p) < min) {
+            break;
+        }
+        textValue.assign(floatToStringWithPrecision(std::stof(textValue) + (1 / p), precision));
+        break;
+    case kKeyDown:
+        if(std::stof(textValue) - (1 / p) > max || std::stof(textValue) - (1 / p) < min) {
+            break;
+        }
+        textValue.assign(floatToStringWithPrecision(std::stof(textValue) - (1 / p), precision));
+        break;
     case kKeyLeft:
         if (position > 0)
             position -= 1;
@@ -245,13 +271,15 @@ bool NumberInput::onKeyboard(const KeyboardEvent &ev)
     case kKeyEnter:
         if (callback != nullptr && textValue.compare(lastTextValue) != 0)
             callback->textEntered(this, textValue);
-
         hasKeyFocus = false;
         break;
     default:
         return false;
         break;
     }
+
+    if (callback != nullptr)
+        callback->textInputChanged(this, textValue);
 
     repaint();
     return true;

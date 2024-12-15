@@ -10,6 +10,9 @@ class Panel : public WidgetGroup
 public:
     Panel(Widget *widget);
 
+    bool roundCorner = false;
+    float radius = 5;
+
 protected:
     void onNanoDisplay() override;
 

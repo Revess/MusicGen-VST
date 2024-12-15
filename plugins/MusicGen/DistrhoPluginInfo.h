@@ -3,10 +3,10 @@
 
 #define DISTRHO_PLUGIN_BRAND "Thunderboom Records"
 #define DISTRHO_PLUGIN_CLAP_ID "thunderboom.musicgen.midiinstrument"
-#define DISTRHO_PLUGIN_CLAP_FEATURES "instrument", "sampler", "mono"
-#define DISTRHO_PLUGIN_VST3_CATEGORIES "Instrument|Sampler"
+#define DISTRHO_PLUGIN_CLAP_FEATURES "instrument", "sampler", "stereo"
+#define DISTRHO_PLUGIN_VST3_CATEGORIES "Instrument|Synth"
 #define DISTRHO_PLUGIN_NAME  "MusicGen"
-#define DISTRHO_PLUGIN_URI "#UI"
+#define DISTRHO_PLUGIN_URI "urn:thunderboom:musicgen"
 
 #define DISTRHO_PLUGIN_HAS_UI 1
 #define DISTRHO_UI_USE_NANOVG 1

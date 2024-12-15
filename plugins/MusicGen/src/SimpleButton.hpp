@@ -16,6 +16,7 @@ public:
     public:
         virtual ~Callback() {};
         virtual void buttonClicked(Button *button) = 0;
+        virtual void contextClicked(Button *button) = 0;
     };
     explicit Button(Widget *parent);
 
@@ -31,6 +32,10 @@ public:
     bool drawBackground;
     bool isToggle;
     bool sqrt = false;
+    bool hasContextFN = false;
+    std::function<void()> contextFn;
+    float radius = 0;
+    std::string filename = "";
 
 protected:
     void onNanoDisplay() override;
@@ -45,6 +50,10 @@ private:
     bool fHasFocus;
     bool fEnabled;
     bool fToggleValue;
+    bool pressed = false;
+    bool ghost = false;
+    float ghostX = 0;
+    float ghostY = 0;
 
     DISTRHO_LEAK_DETECTOR(Button)
 };

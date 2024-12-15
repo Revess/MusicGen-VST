@@ -15,7 +15,11 @@ void Panel::onNanoDisplay()
 
     beginPath();
     fillColor(background_color);
-    rect(0, 0, width, height);
+    if(roundCorner){
+        roundedRect(0, 0, width, height, radius);
+    } else {
+        rect(0, 0, width, height);
+    }
     fill();
     closePath();
 }

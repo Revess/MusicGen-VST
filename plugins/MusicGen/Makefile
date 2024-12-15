@@ -5,6 +5,7 @@ CXXFLAGS += -std=c++17 -Wall -Wextra
 # CXX += /opt/homebrew/opt/qt/bin/qmake
 
 UNAME_S := $(shell uname -s)
+UNAME_M := $(shell uname -m)
 
 ifeq ($(UNAME_S), Linux)
     CXXFLAGS += -I/usr/include/jsoncpp -I/usr/include -I/opt/homebrew/include -DLINUX
@@ -12,13 +13,23 @@ ifeq ($(UNAME_S), Linux)
 endif
 
 ifeq ($(UNAME_S), Darwin)
-    CXXFLAGS += -I/usr/local/include/jsoncpp \
-	-I/usr/local/include -I/opt/homebrew/include \
-	-DDARWIN -arch arm64
-    LDFLAGS += -lcurl -ljsoncpp -lsndfile \
-	-F/opt/homebrew/opt/qt/lib -framework QtCore -framework QtGui -framework QtWidgets
+    ifeq ($(UNAME_M), arm64)
+        # Arm64 (Apple Silicon) specific flags
+        CXXFLAGS += -I/usr/local/include/jsoncpp \
+                    -I/usr/local/include -I/opt/homebrew/include \
+                    -DDARWIN -arch arm64
+        LDFLAGS += -lcurl -ljsoncpp -lsndfile
+    else ifeq ($(UNAME_M), x86_64)
+        # x86_64 (Intel) specific flags
+        CXXFLAGS += -I/usr/local/include/jsoncpp \
+                    -I/usr/local/include -I/opt/homebrew/include \
+                    -DDARWIN -arch x86_64 -O2
+        LDFLAGS += -lcurl -ljsoncpp -lsndfile
+    endif
 endif
+
 ifeq ($(OS), Windows_NT)
+    # Windows-specific flags can be added here
 endif
 
 # --------------------------------------------------------------

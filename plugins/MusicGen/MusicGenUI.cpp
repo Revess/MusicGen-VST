@@ -1,13 +1,16 @@
 #include "MusicGenUI.hpp"
 
 // TODO :
-// FIX text input fields
-// Fix that label is inside the prompt text field
-// Add an option for only integers
+// Add highlight to drumpad button
+// Segmentation fault when closing app when it is loading
+// Loading bug? Forever hanging in loading screen.
 
-// Nice to have: Sure arrow keys to change the value
+// Fix hovering bug (top-down lagging vs bottom-up) <- probably not going to be a thing
 
-// Fix number input box, it doesnt run nicely
+// Compile for:
+// Mac 64
+// Linux
+// Windows
 
 std::string getCurrentDateTime() {
     // Get the current time
@@ -45,6 +48,8 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
     float height = UI_H * fScaleFactor;
 
     float padding = 4.f * fScaleFactor;
+
+    std::cout << getScaleFactor() << std::endl;
 
     if(getScaleFactor() == 2){
         fscaleMult = 1.0;
@@ -169,6 +174,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             sampleLength = new NumberInput(this);
             sampleLength->text_color_greyed = WaiveColors::grey2;
             sampleLength->background_color = WaiveColors::numBoxColor;
+            sampleLength->precision = 2;
             sampleLength->min = 0.4;
             sampleLength->max = 30;
             sampleLength->setText("8");
@@ -199,6 +205,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             promptTempo = new NumberInput(this);
             promptTempo->text_color_greyed = WaiveColors::grey2;
             promptTempo->background_color = WaiveColors::numBoxColor;
+            promptTempo->precision = 2;
             promptTempo->min = 1;
             promptTempo->max = 999;
             promptTempo->align = Align::ALIGN_CENTER;
@@ -229,6 +236,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             nSamples = new NumberInput(this);
             nSamples->text_color_greyed = WaiveColors::grey2;
             nSamples->background_color = WaiveColors::numBoxColor;
+            nSamples->precision = 0;
             nSamples->min = 1;
             nSamples->max = 10;
             nSamples->setText("1");
@@ -278,17 +286,17 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
 
         // Advanced Options
         {
-            advancedSettingsPanel = new Panel(this);
-            advancedSettingsPanel->setSize(generatePanel->getWidth() - (padding), buttonHeight, true);
-            advancedSettingsPanel->below(hBox4, CENTER, padding);
-            advancedSettingsPanel->background_color = WaiveColors::bgGrey;
+            // advancedSettingsPanel = new Panel(this);
+            // advancedSettingsPanel->setSize(generatePanel->getWidth() - (padding), buttonHeight, true);
+            // advancedSettingsPanel->onTop(generatePanel, START, END, padding);
+            // advancedSettingsPanel->background_color = WaiveColors::bgGrey;
             
             advancedSettings = new Checkbox(this);
             advancedSettings->setSize(25, 25, true);
             advancedSettings->background_color = WaiveColors::text;
             advancedSettings->foreground_color = WaiveColors::text;
             advancedSettings->setChecked(false, false);
-            advancedSettings->onTop(advancedSettingsPanel, START, CENTER, padding);
+            advancedSettings->onTop(generatePanel, START, END, padding);
             advancedSettings->setCallback(this);
             advancedSettings->highlight_color = WaiveColors::hiddenColor;
             advancedSettings->accent_color = WaiveColors::highlight;
@@ -502,7 +510,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
     }
     
     // Height of prev elements
-    float sampleListHeight = generateButton->getHeight() + generateButton->getAbsoluteY() - importButton->getAbsoluteY();
+    float sampleListHeight = sampleLengthPanel->getHeight() + sampleLengthPanel->getAbsoluteY() - importButton->getAbsoluteY();
     // Right side of the screen
     {
         // Main panel
@@ -521,7 +529,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             samplesListInner->background_color = WaiveColors::numBoxColor;
         }
 
-        // hBox4
+        // hBox5
         {
             hBox5 = new Panel(this);
             hBox5->background_color = WaiveColors::bgGrey;
@@ -539,8 +547,44 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             openFolderButton->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
             openFolderButton->setFontSize(fontsize);
             openFolderButton->resizeToFit();
+            openFolderButton->setSize((openFolderButton->getWidth()), buttonHeight, true);
             openFolderButton->below(hBox5, END, padding);
             openFolderButton->setCallback(this);
+        }
+
+        // Drumpad panel
+        float panelHeight = samplesListPanel->getHeight() - (hBox5->getHeight() + hBox5->getAbsoluteY()) - padding;
+        float drumpadSize = ((panelHeight - (padding * 4.0)) / 4.0);
+        float panelWidth = ((drumpadSize * 4.0) + (padding * 4.0)) * 2.0;
+        {
+            drumpadPanel = new Panel(this);
+            drumpadPanel->setSize(panelWidth, panelHeight, true);
+            drumpadPanel->below(hBox5, START, 0);
+            drumpadPanel->background_color = WaiveColors::sampleColor2;
+        }
+
+        {
+            // Loop over it change the positioning to take into account the scroll top etc.
+            float prevRow = 0;
+            for(int i = 0; i < 32; i++) {
+                drumpadButtons.push_back(new Button(this));
+                drumpadButtons.back()->setSize(drumpadSize,drumpadSize,true);
+                drumpadButtons.back()->setLabel("");
+                drumpadButtons.back()->sqrt = false;
+                drumpadButtons.back()->hasContextFN = true;
+                drumpadButtons.back()->radius = 5;
+
+                float col = i % 8;
+                float row = floor(i / 8);
+                if(i == 0) {
+                    drumpadButtons.back()->onTop(drumpadPanel, START, START, padding);
+                } else if(row != prevRow) {
+                    drumpadButtons.back()->below(drumpadButtons[drumpadButtons.size() - 9], START, padding);
+                } else {
+                    drumpadButtons.back()->rightOf(drumpadButtons[drumpadButtons.size() - 2], START, padding);
+                }
+                drumpadButtons.back()->setCallback(this);
+            }
         }
 
         // Load samples
@@ -587,7 +631,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
         loaderPanel->background_color = bg_col;
         loaderPanel->hide();
 
-        loaderSpinner = new Label(this, " ");
+        loaderSpinner = new Label(this, "Loading...");
         loaderSpinner->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
         loaderSpinner->setFontSize(fontsize * 4.0f);
         loaderSpinner->text_color = WaiveColors::text;
@@ -707,6 +751,14 @@ void MusicGenUI::generateFn(std::atomic<bool>& done)
     prompt.append(promptTempo->getText());
     prompt.append(" BPM ");
     prompt.append(promptInstrumentation->getText());
+    std::string datetime = getCurrentDateTime();
+    std::string dir_name = textPrompt->getText();
+    dir_name.append("_");
+    dir_name.append(promptTempo->getText());
+    dir_name.append("_BPM_");
+    dir_name.append(promptInstrumentation->getText());
+    dir_name.append("_");
+    dir_name.append(datetime);
 
     // Make a request
     CURL *curl;
@@ -806,7 +858,7 @@ void MusicGenUI::generateFn(std::atomic<bool>& done)
         } else {
             std::string errs;
             std::istringstream ss(readBuffer);
-            std::cout << "Raw Response: " << readBuffer << std::endl;
+            // std::cout << "Raw Response: " << readBuffer << std::endl;
 
             if (Json::parseFromStream(readerBuilder, ss, &jsonData, &errs)) {
                 // Access the values from the JSON response
@@ -825,6 +877,11 @@ void MusicGenUI::generateFn(std::atomic<bool>& done)
             } else {
                 std::cerr << "Failed to parse JSON: " << errs << std::endl;
             }
+
+            const char* homeDir = std::getenv("HOME"); // Works on Unix-like systems
+            std::filesystem::path documentsPath = std::filesystem::path(homeDir) / "Documents" / "MusicGenVST" / "generated" / dir_name;
+            std::filesystem::create_directory(documentsPath);
+
         }
 
         // Cleanup
@@ -844,8 +901,7 @@ void MusicGenUI::generateFn(std::atomic<bool>& done)
         int i = 0;
         for (const auto &link : downloadLinks) {
             const std::string url = std::string(ip) + link.asString();
-            std::string datetime = getCurrentDateTime() + std::string("_") + std::to_string(i) + std::string(".wav");
-            std::filesystem::path outputFilename = std::filesystem::path(homeDir) / "Documents" / "MusicGenVST" / "generated" / datetime;
+            std::filesystem::path outputFilename = std::filesystem::path(homeDir) / "Documents" / "MusicGenVST" / "generated" / dir_name / (std::to_string(i) + ".wav");
 
             curl = curl_easy_init();
 
@@ -870,7 +926,13 @@ void MusicGenUI::generateFn(std::atomic<bool>& done)
 
             outFile.close();
 
-            sampleButtons[i]->setLabel(datetime);
+            std::string fileName = textPrompt->getText();
+            if(fileName.size() > 40) {
+                fileName = fileName.substr(0, 40-3) + "...";
+            }
+
+            sampleButtons[i]->setLabel(fileName);
+            sampleButtons[i]->filename = outputFilename;
             sampleButtons[i]->show();
             i++;
         }
@@ -881,8 +943,9 @@ void MusicGenUI::generateFn(std::atomic<bool>& done)
 void MusicGenUI::startPollingForCompletion(std::atomic<bool>* done) {
     // Use a timer or periodic task in your framework (DPF doesn’t have a built-in timer)
     int i = 0;
-    const std::string spinner = "|/-\\";
-    auto pollCompletion = [this, done, i, spinner]() mutable {
+    float padding = 4.f * 2.f;
+    const std::string spinner = "Loading";
+    auto pollCompletion = [this, done, i, spinner, padding]() mutable {
         if (done->load()) {
             loaderPanel->hide();
             loaderSpinner->hide();
@@ -892,10 +955,10 @@ void MusicGenUI::startPollingForCompletion(std::atomic<bool>* done) {
             return true; // Stop polling
         }
 
-        loaderSpinner->setLabel(std::string(1, spinner[i % spinner.size()]));
-        loaderSpinner->resizeToFit();
-        std::cout << "\rLoading " << spinner[i % 4] << std::flush;
-        i++;
+        // loaderSpinner->setLabel(spinner);
+        // loaderSpinner->onTop(loaderPanel, CENTER, CENTER, padding);
+        // loaderSpinner->resizeToFit();
+        std::cout << "\rLoading " << spinner << std::flush;
 
         repaint(); // Keep the UI responsive while polling
         return false; // Continue polling
@@ -973,20 +1036,65 @@ void MusicGenUI::buttonClicked(Button *button)
             popupButton->hide();
             popupLabel->hide();
         } else{
+            for(size_t i = 0; i < drumpadButtons.size(); i++){
+                if (button == drumpadButtons[i] && drumpadButtons[i]->filename.size() != 0){
+                    plugin->setParameterValue(33, i); // Sample trigger
+                    break;
+                }
+            }
+
             for(std::size_t i = 0; i < sampleButtons.size(); i++){
                 if (button == sampleButtons[i]){
-                    const char* homeDir = std::getenv("HOME"); // Works on Unix-like systems
-                    std::filesystem::path outputFilename = std::filesystem::path(homeDir) / "Documents" / "MusicGenVST" / "generated" / sampleButtons[i]->getLabel();
+                    std::filesystem::path outputFilename = sampleButtons[i]->filename;
                     std::string selectedFile = static_cast<std::string>(outputFilename);
                     plugin->setParameterValue(0, -1.0f);
-                    for(std::size_t i = 0; i < selectedFile.size(); i++){
-                        plugin->setParameterValue(0, static_cast<float>(selectedFile[i]));
+                    for(std::size_t j = 0; j < selectedFile.size(); j++){
+                        plugin->setParameterValue(0, static_cast<float>(selectedFile[j]));
                         // std::cout << selectedFile[i] << std::endl;
                     }
                     plugin->setParameterValue(0, -2.0f);
                     break;
                 }
             }   
+        }
+    }
+}
+
+void MusicGenUI::contextClicked(Button *button)
+{
+    for(size_t i = 0; i < drumpadButtons.size(); i++){
+        if(drumpadButtons[i] == button){
+            const char* homeDir = std::getenv("HOME"); // Works on Unix-like systems
+            std::filesystem::path outputFilename = std::filesystem::path(homeDir) / "Documents" / "MusicGenVST" / "generated" / "";
+            const char* filters[] = { "*.wav" };
+            const char* filePath = tinyfd_openFileDialog(
+                "Select a File",    // Title of the dialog
+                outputFilename.c_str(),                 // Default path
+                1,                  // Number of filters
+                filters,            // File filters
+                "WAV Files",        // Filter description
+                1                   // Do not allow multiple selections
+            );
+
+            if (filePath) {
+                std::cout << "Selected file: " << filePath << std::endl;
+                selectedFile = static_cast<std::string>(filePath);
+                drumpadButtons[i]->filename = filePath;
+            } else {
+                std::cout << "No file selected." << std::endl;
+                selectedFile = "";
+                break;
+            }
+            std::cout << filePath << std::endl;
+            std::string selectedFile = static_cast<std::string>(filePath);
+            std::cout << selectedFile << std::endl;
+            plugin->setParameterValue(i+1, -1.0f);
+            for(std::size_t j = 0; j < selectedFile.size(); j++){
+                plugin->setParameterValue(i+1, static_cast<float>(selectedFile[j]));
+                // std::cout << selectedFile[i] << std::endl;
+            }
+            plugin->setParameterValue(i+1, -2.0f);
+            break;
         }
     }
 }
@@ -1057,8 +1165,7 @@ void MusicGenUI::checkboxUpdated(Checkbox *checkbox, bool value)
             localOnlineSwitch->onTop(samplesListPanel, END, END, padding);
             localOnlineSwitchLabel->leftOf(localOnlineSwitch, CENTER, padding);
 
-            advancedSettingsPanel->below(knobsPanel, CENTER, padding);
-            advancedSettings->onTop(advancedSettingsPanel, START, CENTER, padding);
+            advancedSettings->onTop(generatePanel, START, END, padding);
             advancedSettingsLabel->rightOf(advancedSettings, CENTER, padding);
 
             knobsPanel->show();
@@ -1088,15 +1195,15 @@ void MusicGenUI::checkboxUpdated(Checkbox *checkbox, bool value)
             localOnlineSwitchLabel->show();
         } else {
             setSize(UI_W, UI_H);
-            advancedSettingsPanel->below(hBox4, CENTER, padding);
-            advancedSettings->onTop(advancedSettingsPanel, START, CENTER, padding);
-            advancedSettingsLabel->rightOf(advancedSettings, CENTER, padding);
 
             generatePanel->setSize(generatePanel->getWidth(), (generatePanel->getHeight()) - 150, true);
             samplesListPanel->setSize(samplesListPanel->getWidth(), (samplesListPanel->getHeight()) - 150, true);
             loaderPanel->setSize(loaderPanel->getWidth(), (loaderPanel->getHeight()) - 150, true);
             localOnlineSwitch->onTop(samplesListPanel, END, END, padding);
             localOnlineSwitchLabel->leftOf(localOnlineSwitch, CENTER, padding);
+
+            advancedSettings->onTop(generatePanel, START, END, padding);
+            advancedSettingsLabel->rightOf(advancedSettings, CENTER, padding);
 
             knobsPanel->hide();
 
@@ -1179,43 +1286,6 @@ void MusicGenUI::addSampleToPanel(float padding, std::string name, float button_
     // samplesRemove.back()->setLabel("⌫");
     // samplesRemove.back()->background_color = WaiveColors::grey2;
     // samplesRemove.back()->onTop(samplePanels.back(), END, END, 0);
-}
-
-bool MusicGenUI::onMouse(const MouseEvent &ev)
-{
-    butt_down *= -1;
-    if(butt_down == -1) {
-        current_dragging_path = "";
-    } else {
-        startedDragging = false;
-    }
-    return UI::onMouse(ev);
-}
-
-bool MusicGenUI::onMotion(const MotionEvent &ev)
-{
-    if(butt_down == 1 && sampleButtons[0]->isVisible()){
-        if(current_dragging_path == ""){ // Init the dragging
-            for(size_t i = 0; i < sampleButtons.size(); i++){
-                if(
-                    ev.pos.getX() > sampleButtons[i]->getAbsoluteX() &&
-                    ev.pos.getX() < sampleButtons[i]->getAbsoluteX() + sampleButtons[i]->getWidth() &&
-                    ev.pos.getY() > sampleButtons[i]->getAbsoluteY() &&
-                    ev.pos.getY() < sampleButtons[i]->getAbsoluteY() + sampleButtons[i]->getHeight() &&
-                    sampleButtons[i]->isVisible()
-                ){
-                    const char* homeDir = std::getenv("HOME"); // Works on Unix-like systems
-                    std::filesystem::path outputFilename = std::filesystem::path(homeDir) / "Documents" / "MusicGenVST" / "generated" / sampleButtons[i]->getLabel();
-                    current_dragging_path = outputFilename;
-                    std::cout << current_dragging_path << std::endl;
-                    break;
-                }
-            }
-        } else if(!startedDragging){ // Do the actual drag n drop
-            // Execute the system based drag n drop.
-        }
-    }
-    return UI::onMotion(ev);
 }
 
 END_NAMESPACE_DISTRHO

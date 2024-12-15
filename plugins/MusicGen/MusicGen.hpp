@@ -50,8 +50,12 @@ private:
     friend class MusicGenUI;
     bool startOfFile = false;
     std::string readFilePath = "";
-    std::vector<float> buffer;
-    size_t bufferPosition;
+    std::vector<float> generatedBuffer;
+    size_t generatedBufferPosition;
+
+    std::vector<std::vector<float>> drumpadBuffers;
+    std::vector<size_t> drumpadBufferPositions;
+
 };
 
 END_NAMESPACE_DISTRHO

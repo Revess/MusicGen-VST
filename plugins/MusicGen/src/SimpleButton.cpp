@@ -71,7 +71,11 @@ void Button::onNanoDisplay()
         else
             fillColor(fHasFocus ? highlight_color : background_color);
         if(!sqrt){
-            roundedRect(margin, margin, width - 2 * margin, height - 2 * margin, height * 0.5f);
+            if(radius == 0){
+                roundedRect(margin, margin, width - 2 * margin, height - 2 * margin, height * 0.5f);
+            } else {
+                roundedRect(margin, margin, width - 2 * margin, height - 2 * margin, radius);
+            }
         } else {
             rect(margin, margin, width - 2 * margin, height - 2 * margin);
         }
@@ -93,7 +97,11 @@ void Button::onNanoDisplay()
         beginPath();
         fillColor(0.f, 0.f, 0.f, 0.5f);
         if(!sqrt){
-            roundedRect(margin, margin, width - 2 * margin, height - 2 * margin, height * 0.5f);
+            if(radius == 0){
+                roundedRect(margin, margin, width - 2 * margin, height - 2 * margin, height * 0.5f);
+            } else {
+                roundedRect(margin, margin, width - 2 * margin, height - 2 * margin, radius);
+            }
         } else {
             rect(margin, margin, width - 2 * margin, height - 2 * margin);
         }
@@ -116,6 +124,10 @@ bool Button::onMouse(const MouseEvent &ev)
             fToggleValue = !fToggleValue;
 
         callback->buttonClicked(this);
+        repaint();
+        return true;
+    } else if(fEnabled && callback != nullptr && ev.press && ev.button == kMouseButtonRight && hasContextFN && contains(ev.pos)) {
+        callback->contextClicked(this);
         repaint();
         return true;
     }

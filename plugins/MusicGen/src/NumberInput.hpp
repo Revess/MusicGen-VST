@@ -23,6 +23,7 @@ public:
     void setCallback(Callback *cb);
     void setText(const char *text, bool sendCallback = false);
     void setPlaceholder(const char *text, bool sendCallback = false);
+    void finalizeText();
     std::string getText();
     void undo();
 
@@ -30,6 +31,7 @@ public:
     Align align;
 
     float min = 1;
+    float precision = 2;
     float max = 30;
 
 protected:

@@ -38,10 +38,10 @@
 START_NAMESPACE_DISTRHO
 
 const unsigned int UI_W = 1300;
-const unsigned int UI_H = 550;
+const unsigned int UI_H = 600;
 
 class MusicGenUI : public UI,
-                   public DGL::Button::Callback,
+                   public Button::Callback,
                    public Knob::Callback,
                    public Checkbox::Callback,
                    public TextInput::Callback,
@@ -58,11 +58,9 @@ protected:
     void onNanoDisplay() override;
     void uiScaleFactorChanged(const double scaleFactor) override;
     
-    bool onMouse(const MouseEvent &ev) override;
-    bool onMotion(const MotionEvent &ev) override;
-
     // Callback handler
     void buttonClicked(Button *button) override;
+    void contextClicked(Button *button) override;
     void knobDragStarted(Knob *knob) override;
     void knobDragFinished(Knob *knob, float value) override;
     void knobValueChanged(Knob *knob, float value) override;
@@ -86,6 +84,11 @@ protected:
 private:
     MusicGen *plugin;
 
+    // Drum Pad
+    // Panel Drum pad
+    Panel *drumpadPanel;
+    std::vector<Button*> drumpadButtons;
+
     // Still in Use
     // Lose Panels
     Panel *importPanel;
@@ -97,6 +100,7 @@ private:
     Button *clearImportedSample;
     Button *generateButton;
     Button *openFolderButton;
+    Button *dragAndDrop;
 
     // text inputs
     TextInput *textPrompt;
@@ -155,7 +159,6 @@ private:
     std::vector<Panel*> sampleLabelWrappers;
     std::vector<Button*> samplesRemove;
 
-    // Pending if in Use
     Checkbox *localOnlineSwitch;
     Label *localOnlineSwitchLabel;
 
