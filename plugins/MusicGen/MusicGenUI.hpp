@@ -97,6 +97,7 @@ private:
 
     // Buttons
     Button *importButton;
+    Button *importButtonIcon;
     Button *clearImportedSample;
     Button *generateButton;
     Button *openFolderButton;
@@ -156,6 +157,7 @@ private:
     std::vector<Panel*> samplePanels;
     std::vector<Button*> sampleButtons;
     std::vector<Label*> sampleLabels;
+    std::vector<Label*> sampleNames;
     std::vector<Panel*> sampleLabelWrappers;
     std::vector<Button*> samplesRemove;
 

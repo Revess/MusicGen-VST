@@ -35,6 +35,8 @@ public:
     bool hasContextFN = false;
     float radius = 0;
     std::string filename = "";
+    int lableAlignment = Align::ALIGN_CENTER | Align::ALIGN_MIDDLE;
+    bool fEnabled;
 
 protected:
     void onNanoDisplay() override;
@@ -47,7 +49,6 @@ private:
     std::string label;
 
     bool fHasFocus;
-    bool fEnabled;
     bool fToggleValue;
     bool pressed = false;
     bool ghost = false;

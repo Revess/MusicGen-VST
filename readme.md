@@ -6,6 +6,22 @@
 
 ```git submodule update --init --recursive```
 
+### OSX
+#### ARM64
+```
+arch -arm64 brew install jsoncpp curl sndfile
+cd ./plugins/MusicGen
+chmod +x ./build.sh
+./build.sh
+```
+
+#### AMD64
+```
+arch -x86_64 brew install jsoncpp curl sndfile
+cd ./plugins/MusicGen
+chmod +x ./build.sh
+./build.sh
+```
 
 # Ignor
 ```
@@ -22,3 +38,5 @@ sudo meson install -C build
 
 ## Linux make setup
 ```sudo apt-get install libcurl4-openssl-dev libjsoncpp-dev```
+
+brew install libsndfile jsoncpp

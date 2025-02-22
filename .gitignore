@@ -12,3 +12,4 @@ __pycache__
 release/*
 vst2/*
 vst3/*
+codesign_cert.txt

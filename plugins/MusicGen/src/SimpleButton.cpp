@@ -88,7 +88,7 @@ void Button::onNanoDisplay()
     fontSize(getFontSize());
     fontFaceId(font);
     fillColor(text_color);
-    textAlign(ALIGN_CENTER | ALIGN_MIDDLE);
+    textAlign(lableAlignment);
     text(width / 2, height / 2, label.c_str(), nullptr);
     closePath();
 
@@ -113,12 +113,17 @@ void Button::onNanoDisplay()
 bool Button::onMouse(const MouseEvent &ev)
 {
     // std::cout << "Button::onMouse " << label << ": " << fEnabled << " " << (callback != nullptr) << " " << ev.press << " " << (ev.button == kMouseButtonLeft) << " " << contains(ev.pos) << std::endl;
+    // std::cout << ev.pos.getX() << ev.pos.getY() << std::endl;
+    // std::cout << this->getAbsoluteX() << this->getAbsoluteY() << std::endl;
     if (
         fEnabled &&
         callback != nullptr &&
         ev.press &&
         ev.button == kMouseButtonLeft &&
-        contains(ev.pos))
+        contains(ev.pos)
+        // ev.pos.getX() > this->getAbsoluteX() && ev.pos.getX() < this->getAbsoluteX() + this->getWidth() &&
+        // ev.pos.getY() > this->getAbsoluteY() && ev.pos.getY() < this->getAbsoluteY() + this->getHeight())
+    )
     {
         if (isToggle)
             fToggleValue = !fToggleValue;

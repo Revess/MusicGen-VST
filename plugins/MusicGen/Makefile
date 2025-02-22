@@ -1,35 +1,34 @@
-#!/usr/bin/make -f
-
 NAME = MusicGenVST
 CXXFLAGS += -std=c++17 -Wall -Wextra
-# CXX += /opt/homebrew/opt/qt/bin/qmake
 
 UNAME_S := $(shell uname -s)
 UNAME_M := $(shell uname -m)
 
 ifeq ($(UNAME_S), Linux)
-    CXXFLAGS += -I/usr/include/jsoncpp -I/usr/include -I/opt/homebrew/include -DLINUX
-    LDFLAGS += -lcurl -ljsoncpp -lsndfile
+	CXXFLAGS += -I/usr/include/jsoncpp -I/usr/include -I/opt/homebrew/include -DLINUX
+	LDFLAGS += -lcurl -ljsoncpp -lsndfile
 endif
 
 ifeq ($(UNAME_S), Darwin)
-    ifeq ($(UNAME_M), arm64)
-        # Arm64 (Apple Silicon) specific flags
-        CXXFLAGS += -I/usr/local/include/jsoncpp \
-                    -I/usr/local/include -I/opt/homebrew/include \
-                    -DDARWIN -arch arm64
-        LDFLAGS += -lcurl -ljsoncpp -lsndfile
-    else ifeq ($(UNAME_M), x86_64)
-        # x86_64 (Intel) specific flags
-        CXXFLAGS += -I/usr/local/include/jsoncpp \
-                    -I/usr/local/include -I/opt/homebrew/include \
-                    -DDARWIN -arch x86_64 -O2
-        LDFLAGS += -lcurl -ljsoncpp -lsndfile
-    endif
+	CFXXLAGS += -mmacosx-version-min=12.0
+	LDFLAGS += -mmacosx-version-min=12.0
+	ifeq ($(UNAME_M), arm64)
+		# Arm64 (Apple Silicon) specific flags
+		CXXFLAGS += -I/usr/local/include/jsoncpp \
+					-I/usr/local/include -I/opt/homebrew/include \
+					-DDARWIN -arch arm64
+		LDFLAGS += -lcurl -L/opt/homebrew/lib -ljsoncpp -lsndfile
+	else ifeq ($(UNAME_M), x86_64)
+		# x86_64 (Intel) specific flags
+		CXXFLAGS += -I/usr/local/include/jsoncpp \
+					-I/usr/local/include \
+					-DDARWIN -arch x86_64 -O2
+		LDFLAGS += -lcurl -L/usr/local/lib -ljsoncpp -lsndfile
+	endif
 endif
 
 ifeq ($(OS), Windows_NT)
-    # Windows-specific flags can be added here
+	# Windows-specific flags can be added here
 endif
 
 # --------------------------------------------------------------
@@ -72,5 +71,3 @@ endif
 TARGETS += jack
 
 all: $(TARGETS)
-
-# --------------------------------------------------------------

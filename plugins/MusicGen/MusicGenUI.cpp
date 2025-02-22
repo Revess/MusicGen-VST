@@ -12,6 +12,9 @@
 // Linux
 // Windows
 
+// TODO:
+// Upload button to the new style
+
 std::string getCurrentDateTime() {
     // Get the current time
     std::time_t t = std::time(nullptr);
@@ -79,21 +82,45 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             {
                 importPanel = new Panel(this);
                 importPanel->background_color = WaiveColors::bgGrey;
-                importPanel->setSize(generatePanel->getWidth(), 100, true);
-                importPanel->onTop(generatePanel, START, START, padding);
+                importPanel->setSize(generatePanel->getWidth() - (padding * 2.0f), 160, true);
+                importPanel->onTop(generatePanel, START, START, padding * 2.0f);
             }
-            
+
             {
                 importButton = new Button(this);
                 importButton->text_color = Color(255, 255, 255);
-                importButton->background_color = WaiveColors::bgDark;
-                importButton->highlight_color = WaiveColors::bgHighlight;
-                importButton->setLabel("Upload Audio File");
+                importButton->background_color = WaiveColors::hiddenColor;
+                importButton->highlight_color = WaiveColors::hiddenColor;
+                importButton->setLabel("");
                 importButton->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
                 importButton->setFontSize(fontsize);
-                importButton->setSize((generatePanel->getWidth() * 0.7f) - (padding * 1.0f), buttonHeight, true);
-                importButton->onTop(importPanel, START, CENTER, 0);
+                importButton->setSize((importPanel->getWidth() * 0.35f), buttonHeight, true);
+                importButton->onTop(importPanel, CENTER, CENTER, 0);
                 importButton->setCallback(this);
+            }
+
+            {
+                loadedFile = new Label(this, "Upload Audio File");
+                loadedFile->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
+                loadedFile->setFontSize(fontsize * 0.9);
+                loadedFile->text_color = WaiveColors::text;
+                loadedFile->resizeToFit();
+                loadedFile->onTop(importButton, START, CENTER, 0);
+            }
+
+            {
+                importButtonIcon = new Button(this);
+                importButtonIcon->text_color = Color(255, 255, 255);
+                importButtonIcon->background_color = WaiveColors::bgDark;
+                importButtonIcon->highlight_color = WaiveColors::bgHighlight;
+                importButtonIcon->setLabel("↓");
+                importButtonIcon->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
+                importButtonIcon->setFontSize(fontsize);
+                importButtonIcon->fEnabled = false;
+                // importButton->setSize((generatePanel->getWidth() * 0.7f) - (padding * 1.0f), buttonHeight, true);
+                importButtonIcon->resizeToFit();
+                importButtonIcon->setSize(importButton->getHeight(), importButton->getHeight(), true);
+                importButtonIcon->onTop(importButton, END, CENTER, padding);
             }
 
             {
@@ -101,23 +128,16 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
                 clearImportedSample->text_color = Color(255, 255, 255);
                 clearImportedSample->background_color = WaiveColors::bgDark;
                 clearImportedSample->highlight_color = WaiveColors::bgHighlight;
-                clearImportedSample->setLabel("Clear Sample");
+                clearImportedSample->setLabel("X");
                 clearImportedSample->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
                 clearImportedSample->setFontSize(fontsize);
-                clearImportedSample->setSize((generatePanel->getWidth() * 0.3f) - (padding * 1.0f), buttonHeight, true);
-                clearImportedSample->rightOf(importButton, START, 0);
+                // clearImportedSample->setSize((generatePanel->getWidth() * 0.3f) - (padding * 1.0f), buttonHeight, true);
+                clearImportedSample->resizeToFit();
+                clearImportedSample->setSize(importButtonIcon->getHeight(), importButtonIcon->getHeight(), true);
+                clearImportedSample->onTop(importButtonIcon, CENTER, CENTER, 0);
                 clearImportedSample->setCallback(this);
-
-                {
-                    loadedFile = new Label(this, "This is the test loc of the load filepath");
-                    loadedFile->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
-                    loadedFile->setFontSize(fontsize * 0.9);
-                    loadedFile->text_color = WaiveColors::text;
-                    loadedFile->resizeToFit();
-                    loadedFile->below(importButton, START, padding);
-                }
+                clearImportedSample->hide();
             }
-            loadedFile->hide();
         }
 
         // Prompt
@@ -128,7 +148,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             textPrompt->setSize(generatePanel->getWidth() - (padding * 2.0f), textBoxHeight, true);
             textPrompt->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
             textPrompt->setFontSize(fontsize);
-            textPrompt->below(loadedFile, START, padding);
+            textPrompt->below(importPanel, START, padding);
             textPrompt->setCallback(this);
         }
 
@@ -187,7 +207,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             sampleLengthPanel->setSize(sampleLength->getWidth() + sampleLengthLabel->getWidth(), numBoxHeight, true);
             sampleLengthPanel->below(hBox2, START, padding);
 
-            sampleLengthLabel->onTop(sampleLengthPanel, START, CENTER, 0);
+            sampleLengthLabel->onTop(sampleLengthPanel, START, CENTER, padding);
             sampleLength->rightOf(sampleLengthLabel, CENTER, padding);
         }
 
@@ -266,6 +286,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
         {
             generateButton = new Button(this);
             generateButton->text_color = Color(255, 255, 255);
+            generateButton->radius = 10;
             generateButton->background_color = WaiveColors::bgDark;
             generateButton->highlight_color = WaiveColors::bgHighlight;
             generateButton->setLabel("Generate");
@@ -292,7 +313,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             // advancedSettingsPanel->background_color = WaiveColors::bgGrey;
             
             advancedSettings = new Checkbox(this);
-            advancedSettings->setSize(25, 25, true);
+            advancedSettings->setSize(20, 20, true);
             advancedSettings->background_color = WaiveColors::text;
             advancedSettings->foreground_color = WaiveColors::text;
             advancedSettings->setChecked(false, false);
@@ -510,7 +531,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
     }
     
     // Height of prev elements
-    float sampleListHeight = sampleLengthPanel->getHeight() + sampleLengthPanel->getAbsoluteY() - importButton->getAbsoluteY();
+    float sampleListHeight = generateButton->getAbsoluteY() + generateButton->getHeight() - padding;
     // Right side of the screen
     {
         // Main panel
@@ -524,9 +545,9 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
         // Inner panel
         {
             samplesListInner = new Panel(this);
-            samplesListInner->setSize((width * 0.5f * 0.5f) - (padding * 2), sampleListHeight, true);
-            samplesListInner->onTop(samplesListPanel, CENTER, START, importButton->getAbsoluteY());
-            samplesListInner->background_color = WaiveColors::numBoxColor;
+            samplesListInner->setSize((width * 0.5f * 0.5f) - (padding * 4), sampleListHeight, true);
+            samplesListInner->onTop(samplesListPanel, CENTER, START, generateButton->getHeight() * 0.5f);
+            samplesListInner->background_color = WaiveColors::hiddenColor;
         }
 
         // hBox5
@@ -561,6 +582,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             drumpadPanel->setSize(panelWidth, panelHeight, true);
             drumpadPanel->below(hBox5, START, 0);
             drumpadPanel->background_color = WaiveColors::sampleColor2;
+            drumpadPanel->hide();
         }
 
         {
@@ -584,6 +606,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
                     drumpadButtons.back()->rightOf(drumpadButtons[drumpadButtons.size() - 2], START, padding);
                 }
                 drumpadButtons.back()->setCallback(this);
+                drumpadButtons.back()->hide();
             }
         }
 
@@ -592,7 +615,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             // Loop over it change the positioning to take into account the scroll top etc.
             float button_height = ((samplesListInner->getHeight() * 0.5f) / 10.0f);
             for(int i = 0; i < 10; i++) {
-                addSampleToPanel(padding, std::string("test"), button_height);
+                addSampleToPanel(padding, std::string(""), button_height);
                 // if(samplePanels.size() > 12){
                 //     scrollBar->setSize((padding * 2), round(static_cast<float>(scrollBarHeight) * ((12.0) / static_cast<float>(samplePanels.size()))), true);
                 // }
@@ -601,7 +624,7 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
 
         {
             localOnlineSwitch = new Checkbox(this);
-            localOnlineSwitch->setSize(25, 25, true);
+            localOnlineSwitch->setSize(20, 20, true);
             localOnlineSwitch->background_color = WaiveColors::text;
             localOnlineSwitch->foreground_color = WaiveColors::text;
             localOnlineSwitch->setChecked(false, false);
@@ -927,12 +950,13 @@ void MusicGenUI::generateFn(std::atomic<bool>& done)
             outFile.close();
 
             std::string fileName = textPrompt->getText();
-            if(fileName.size() > 40) {
+            if(fileName.size() > 50) {
                 fileName = fileName.substr(0, 40-3) + "...";
             }
 
-            sampleButtons[i]->setLabel(fileName);
+            sampleNames[i]->setLabel(fileName);
             sampleButtons[i]->filename = outputFilename;
+            sampleNames[i]->show();
             sampleButtons[i]->show();
             i++;
         }
@@ -979,6 +1003,7 @@ void MusicGenUI::addTimer(std::function<bool()> callback, int interval) {
 
 void MusicGenUI::buttonClicked(Button *button)
 {
+    float padding = 4.f * fScaleFactor;
     if(!loaderPanel->isVisible()){
         // Start making the request
         if(button == generateButton){
@@ -1006,9 +1031,15 @@ void MusicGenUI::buttonClicked(Button *button)
             if (filePath) {
                 std::cout << "Selected file: " << filePath << std::endl;
                 selectedFile = static_cast<std::string>(filePath);
-                loadedFile->setLabel(selectedFile);
+                loadedFile->setLabel(getBasename(selectedFile));
                 loadedFile->resizeToFit();
-                loadedFile->show();
+                importButton->setSize(loadedFile->getWidth() + importButtonIcon->getWidth() + padding, importButton->getHeight());
+                importButton->onTop(importPanel, CENTER, CENTER, 0);
+                loadedFile->onTop(importButton, START, CENTER, 0);
+                importButtonIcon->onTop(importButton, END, CENTER, 0);
+                clearImportedSample->onTop(importButtonIcon, CENTER, CENTER, 0);
+                importButtonIcon->hide();
+                clearImportedSample->show();
             } else {
                 std::cout << "No file selected." << std::endl;
                 selectedFile = "";
@@ -1016,7 +1047,15 @@ void MusicGenUI::buttonClicked(Button *button)
 
         } else if(button == clearImportedSample) {
             selectedFile = "";
-            loadedFile->hide();
+            loadedFile->setLabel("Upload Audio File");
+            loadedFile->resizeToFit();
+            importButton->setSize(loadedFile->getWidth() + importButtonIcon->getWidth() + padding, importButton->getHeight());
+            importButton->onTop(importPanel, CENTER, CENTER, 0);
+            loadedFile->onTop(importButton, START, CENTER, 0);
+            importButtonIcon->onTop(importButton, END, CENTER, 0);
+            clearImportedSample->onTop(importButtonIcon, CENTER, CENTER, 0);
+            importButtonIcon->show();
+            clearImportedSample->hide();
         } else if(button == openFolderButton) {
             #ifdef _WIN32
                 // Windows
@@ -1242,23 +1281,27 @@ void MusicGenUI::checkboxUpdated(Checkbox *checkbox, bool value)
 
 void MusicGenUI::addSampleToPanel(float padding, std::string name, float button_height)
 {
-    float h = std::ceil(button_height) * fscaleMult;
+    float g = 2.f * fscaleMult;
+    float h = std::ceil(button_height) * fscaleMult - g;
     // Init the holding panel
     samplePanels.push_back(new Panel(this));
     samplePanels.back()->setSize((samplesListInner->getWidth() * 0.5f * fscaleMult), h);
+    samplePanels.back()->roundCorner = true;
+    samplePanels.back()->radius = 2;
     if(samplePanels.size() % 2 == 1){
         samplePanels.back()->background_color = WaiveColors::sampleColor1;
     } else {
         samplePanels.back()->background_color = WaiveColors::sampleColor2;
     }
     if(samplePanels.size() == 1){
-        samplePanels.back()->onTop(samplesListInner, START, START, 0);
+        samplePanels.back()->onTop(samplesListInner, START, START, g/2);
     } else {
-        samplePanels.back()->below(samplePanels[samplePanels.size()-2], START, 0);
+        samplePanels.back()->below(samplePanels[samplePanels.size()-2], START, g/2);
     }
     
     sampleButtons.push_back(new Button(this));
-    sampleButtons.back()->sqrt = true;
+    sampleButtons.back()->sqrt = false;
+    sampleButtons.back()->radius = 2;
     sampleButtons.back()->setSize((samplePanels.back()->getWidth() * 0.5 * fscaleMult), h);
     sampleButtons.back()->setLabel(name);
     sampleButtons.back()->background_color = WaiveColors::hiddenColor;
@@ -1268,8 +1311,8 @@ void MusicGenUI::addSampleToPanel(float padding, std::string name, float button_
 
     sampleLabelWrappers.push_back(new Panel(this));
     sampleLabelWrappers.back()->background_color = WaiveColors::hiddenColor;
-    sampleLabelWrappers.back()->setSize(samplePanels.back()->getWidth() * 0.5f * 0.1f, h);
-    sampleLabelWrappers.back()->onTop(samplePanels.back(), START, START, 0);
+    sampleLabelWrappers.back()->setSize(samplePanels.back()->getWidth() * 0.5f * 0.12f, h);
+    sampleLabelWrappers.back()->onTop(samplePanels.back(), START, CENTER, 0);
 
     sampleLabels.push_back(new Label(this, std::to_string(sampleLabels.size() + 1)));
     sampleLabels.back()->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
@@ -1277,7 +1320,17 @@ void MusicGenUI::addSampleToPanel(float padding, std::string name, float button_
     sampleLabels.back()->text_color = WaiveColors::text;
     sampleLabels.back()->background_color = WaiveColors::hiddenColor;
     sampleLabels.back()->resizeToFit();
-    sampleLabels.back()->onTop(sampleLabelWrappers.back(), CENTER, CENTER, 0);
+    sampleLabels.back()->onTop(sampleLabelWrappers.back(), START, CENTER, padding);
+
+    sampleNames.push_back(new Label(this, std::to_string(sampleNames.size() + 1)));
+    sampleNames.back()->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
+    sampleNames.back()->setFontSize(fontsize);
+    sampleNames.back()->text_color = WaiveColors::text;
+    sampleNames.back()->background_color = WaiveColors::hiddenColor;
+    // sampleNames.back()->setSize(samplePanels.back()->getWidth() - sampleLabelWrappers.back()->getWidth(), sampleLabelWrappers.back()->getHeight(), false);
+    sampleNames.back()->resizeToFit();
+    sampleNames.back()->rightOf(sampleLabelWrappers.back(), CENTER, padding);
+    sampleNames.back()->hide();
 
     sampleButtons.back()->hide();
 
