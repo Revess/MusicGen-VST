@@ -307,29 +307,47 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
 
         // Advanced Options
         {
+            // Open Folder Button
+            {
+                advancedSettingsButton = new Button(this);
+                advancedSettingsButton->text_color = Color(255, 255, 255);
+                advancedSettingsButton->background_color = WaiveColors::bgDark;
+                advancedSettingsButton->highlight_color = WaiveColors::bgHighlight;
+                advancedSettingsButton->accent_color = WaiveColors::highlight;
+                advancedSettingsButton->isToggle = true;
+                advancedSettingsButton->radius = 10;
+                advancedSettingsButton->setLabel("Advanced Settings");
+                advancedSettingsButton->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
+                advancedSettingsButton->setFontSize(fontsize);
+                advancedSettingsButton->resizeToFit();
+                advancedSettingsButton->setSize((advancedSettingsButton->getWidth()), buttonHeight, true);
+                advancedSettingsButton->onTop(generatePanel, START, END, padding);
+                advancedSettingsButton->setCallback(this);
+            }
+
             // advancedSettingsPanel = new Panel(this);
             // advancedSettingsPanel->setSize(generatePanel->getWidth() - (padding), buttonHeight, true);
             // advancedSettingsPanel->onTop(generatePanel, START, END, padding);
             // advancedSettingsPanel->background_color = WaiveColors::bgGrey;
             
-            advancedSettings = new Checkbox(this);
-            advancedSettings->setSize(20, 20, true);
-            advancedSettings->background_color = WaiveColors::text;
-            advancedSettings->foreground_color = WaiveColors::text;
-            advancedSettings->setChecked(false, false);
-            advancedSettings->onTop(generatePanel, START, END, padding);
-            advancedSettings->setCallback(this);
-            advancedSettings->highlight_color = WaiveColors::hiddenColor;
-            advancedSettings->accent_color = WaiveColors::highlight;
+            // advancedSettings = new Checkbox(this);
+            // advancedSettings->setSize(20, 20, true);
+            // advancedSettings->background_color = WaiveColors::text;
+            // advancedSettings->foreground_color = WaiveColors::text;
+            // advancedSettings->setChecked(false, false);
+            // advancedSettings->onTop(generatePanel, START, END, padding);
+            // advancedSettings->setCallback(this);
+            // advancedSettings->highlight_color = WaiveColors::hiddenColor;
+            // advancedSettings->accent_color = WaiveColors::highlight;
 
-            advancedSettingsLabel = new Label(this, "Advanced Settings");
-            advancedSettingsLabel->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
-            advancedSettingsLabel->setFontSize(fontsize);
-            advancedSettingsLabel->text_color = WaiveColors::text;
-            advancedSettingsLabel->resizeToFit();
-            advancedSettingsLabel->rightOf(advancedSettings, CENTER, padding);
+            // advancedSettingsLabel = new Label(this, "Advanced Settings");
+            // advancedSettingsLabel->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
+            // advancedSettingsLabel->setFontSize(fontsize);
+            // advancedSettingsLabel->text_color = WaiveColors::text;
+            // advancedSettingsLabel->resizeToFit();
+            // advancedSettingsLabel->rightOf(advancedSettings, CENTER, padding);
 
-            // Sample prompt Button
+            // // Sample prompt Button
         }
 
         // Hidden knobs
@@ -564,12 +582,14 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
             openFolderButton->text_color = Color(255, 255, 255);
             openFolderButton->background_color = WaiveColors::bgDark;
             openFolderButton->highlight_color = WaiveColors::bgHighlight;
+            openFolderButton->accent_color = WaiveColors::highlight;
+            openFolderButton->radius = 10;
             openFolderButton->setLabel("Local Files");
             openFolderButton->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
             openFolderButton->setFontSize(fontsize);
             openFolderButton->resizeToFit();
             openFolderButton->setSize((openFolderButton->getWidth()), buttonHeight, true);
-            openFolderButton->below(hBox5, END, padding);
+            openFolderButton->onTop(samplesListPanel, END, END, padding);
             openFolderButton->setCallback(this);
         }
 
@@ -623,25 +643,43 @@ MusicGenUI::MusicGenUI() : UI(UI_W, UI_H),
         }
 
         {
-            localOnlineSwitch = new Checkbox(this);
-            localOnlineSwitch->setSize(20, 20, true);
-            localOnlineSwitch->background_color = WaiveColors::text;
-            localOnlineSwitch->foreground_color = WaiveColors::text;
-            localOnlineSwitch->setChecked(false, false);
-            localOnlineSwitch->onTop(samplesListPanel, END, END, padding);
-            localOnlineSwitch->setCallback(this);
-            localOnlineSwitch->highlight_color = WaiveColors::hiddenColor;
+            localOnlineSwitch = new Button(this);
+            localOnlineSwitch->text_color = Color(255, 255, 255);
+            localOnlineSwitch->background_color = WaiveColors::bgDark;
+            localOnlineSwitch->highlight_color = WaiveColors::bgHighlight;
             localOnlineSwitch->accent_color = WaiveColors::highlight;
-
-            localOnlineSwitchLabel = new Label(this, "Use local server");
-            localOnlineSwitchLabel->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
-            localOnlineSwitchLabel->setFontSize(fontsize);
-            localOnlineSwitchLabel->text_color = WaiveColors::text;
-            localOnlineSwitchLabel->resizeToFit();
-            localOnlineSwitchLabel->leftOf(localOnlineSwitch, CENTER, padding);
+            localOnlineSwitch->isToggle = true;
+            localOnlineSwitch->radius = 10;
+            localOnlineSwitch->setLabel("Use local server");
+            localOnlineSwitch->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
+            localOnlineSwitch->setFontSize(fontsize);
+            localOnlineSwitch->resizeToFit();
+            localOnlineSwitch->setSize((advancedSettingsButton->getWidth()), buttonHeight, true);
+            localOnlineSwitch->onTop(generatePanel, END, END, padding);
+            localOnlineSwitch->setCallback(this);
             localOnlineSwitch->hide();
-            localOnlineSwitchLabel->hide();
         }
+
+        // {
+        //     localOnlineSwitch = new Checkbox(this);
+        //     localOnlineSwitch->setSize(20, 20, true);
+        //     localOnlineSwitch->background_color = WaiveColors::text;
+        //     localOnlineSwitch->foreground_color = WaiveColors::text;
+        //     localOnlineSwitch->setChecked(false, false);
+        //     localOnlineSwitch->onTop(samplesListPanel, END, END, padding);
+        //     localOnlineSwitch->setCallback(this);
+        //     localOnlineSwitch->highlight_color = WaiveColors::hiddenColor;
+        //     localOnlineSwitch->accent_color = WaiveColors::highlight;
+
+        //     localOnlineSwitchLabel = new Label(this, "Use local server");
+        //     localOnlineSwitchLabel->setFont("Space-Grotesk", SpaceGrotesk_Regular_ttf, SpaceGrotesk_Regular_ttf_len);
+        //     localOnlineSwitchLabel->setFontSize(fontsize);
+        //     localOnlineSwitchLabel->text_color = WaiveColors::text;
+        //     localOnlineSwitchLabel->resizeToFit();
+        //     localOnlineSwitchLabel->leftOf(localOnlineSwitch, CENTER, padding);
+        //     localOnlineSwitch->hide();
+        //     localOnlineSwitchLabel->hide();
+        // }
     }
 
     {
@@ -757,7 +795,7 @@ void MusicGenUI::generateFn(std::atomic<bool>& done)
     // TODO: add way for audio prompt
     // Make if else statment here to update the IP to localhost if in offline mode.
     std::string ip = "";
-    if(!localOnlineSwitch->getChecked()){
+    if(!localOnlineSwitch->getToggled()){
         ip = "http://82.217.111.120/";
     } else {
         ip = "http://127.0.0.1:55000/";
@@ -950,9 +988,13 @@ void MusicGenUI::generateFn(std::atomic<bool>& done)
             outFile.close();
 
             std::string fileName = textPrompt->getText();
-            if(fileName.size() > 50) {
+            std::cout << fileName << std::endl;
+
+            if(fileName.size() > 40) {
                 fileName = fileName.substr(0, 40-3) + "...";
-            }
+            } 
+
+            std::cout << fileName << std::endl;
 
             sampleNames[i]->setLabel(fileName);
             sampleButtons[i]->filename = outputFilename;
@@ -1007,6 +1049,13 @@ void MusicGenUI::buttonClicked(Button *button)
     if(!loaderPanel->isVisible()){
         // Start making the request
         if(button == generateButton){
+            textPrompt->hasKeyFocus = false;
+            promptTempo->hasKeyFocus = false;
+
+            promptInstrumentation->hasKeyFocus = false;
+            sampleLength->hasKeyFocus = false;
+            nSamples->hasKeyFocus = false;
+
             loaderPanel->show();
             loaderSpinner->show();
             repaint();
@@ -1074,6 +1123,75 @@ void MusicGenUI::buttonClicked(Button *button)
             popupPanel->hide();
             popupButton->hide();
             popupLabel->hide();
+        } else if(button == advancedSettingsButton){
+            if(advancedSettingsButton->getToggled()){
+                setSize(UI_W, UI_H + 150);
+    
+                generatePanel->setSize(generatePanel->getWidth(), (generatePanel->getHeight()) + 150, true);
+                samplesListPanel->setSize(samplesListPanel->getWidth(), (samplesListPanel->getHeight()) + 150, true);
+                loaderPanel->setSize(loaderPanel->getWidth(), (loaderPanel->getHeight()) + 150, true);
+                localOnlineSwitch->onTop(samplesListPanel, END, END, padding);
+    
+                advancedSettingsButton->onTop(generatePanel, START, END, padding*2.0f);
+
+                knobsPanel->show();
+    
+                temperatureKnob->show();
+                temperatureLabel->show();
+                temperaturePanel->show();
+                temperatureUpLabel->show();
+    
+                topKKnob->show();
+                topKLabel->show();
+                topKPanel->show();
+                topKUpLabel->show();
+    
+                topPKnob->show();
+                topPLabel->show();
+                topPPanel->show();
+                topPUpLabel->show();
+    
+                CFGKnob->show();
+                CFGLabel->show();
+                CFGPanel->show();
+                CFGUpLabel->show();
+    
+    
+                localOnlineSwitch->show();
+            } else {
+                setSize(UI_W, UI_H);
+    
+                generatePanel->setSize(generatePanel->getWidth(), (generatePanel->getHeight()) - 150, true);
+                samplesListPanel->setSize(samplesListPanel->getWidth(), (samplesListPanel->getHeight()) - 150, true);
+                loaderPanel->setSize(loaderPanel->getWidth(), (loaderPanel->getHeight()) - 150, true);
+                localOnlineSwitch->onTop(samplesListPanel, END, END, padding);
+
+                advancedSettingsButton->onTop(generatePanel, START, END, padding*2.0f);
+    
+                knobsPanel->hide();
+    
+                temperatureKnob->hide();
+                temperatureLabel->hide();
+                temperaturePanel->hide();
+                temperatureUpLabel->hide();
+    
+                topKKnob->hide();
+                topKLabel->hide();
+                topKPanel->hide();
+                topKUpLabel->hide();
+    
+                topPKnob->hide();
+                topPLabel->hide();
+                topPPanel->hide();
+                topPUpLabel->hide();
+    
+                CFGKnob->hide();
+                CFGLabel->hide();
+                CFGPanel->hide();
+                CFGUpLabel->hide();
+    
+                localOnlineSwitch->hide();
+            }
         } else{
             for(size_t i = 0; i < drumpadButtons.size(); i++){
                 if (button == drumpadButtons[i] && drumpadButtons[i]->filename.size() != 0){
@@ -1194,88 +1312,88 @@ void MusicGenUI::textInputChanged(NumberInput *numberInput, std::string text)
 void MusicGenUI::checkboxUpdated(Checkbox *checkbox, bool value)
 {
     float padding = 4.f * 2.0f;
-    if(checkbox == advancedSettings){
-        if(value == true){
-            setSize(UI_W, UI_H + 150);
+    // if(checkbox == advancedSettings){
+    //     if(value == true){
+    //         setSize(UI_W, UI_H + 150);
 
-            generatePanel->setSize(generatePanel->getWidth(), (generatePanel->getHeight()) + 150, true);
-            samplesListPanel->setSize(samplesListPanel->getWidth(), (samplesListPanel->getHeight()) + 150, true);
-            loaderPanel->setSize(loaderPanel->getWidth(), (loaderPanel->getHeight()) + 150, true);
-            localOnlineSwitch->onTop(samplesListPanel, END, END, padding);
-            localOnlineSwitchLabel->leftOf(localOnlineSwitch, CENTER, padding);
+    //         generatePanel->setSize(generatePanel->getWidth(), (generatePanel->getHeight()) + 150, true);
+    //         samplesListPanel->setSize(samplesListPanel->getWidth(), (samplesListPanel->getHeight()) + 150, true);
+    //         loaderPanel->setSize(loaderPanel->getWidth(), (loaderPanel->getHeight()) + 150, true);
+    //         localOnlineSwitch->onTop(samplesListPanel, END, END, padding);
+    //         localOnlineSwitchLabel->leftOf(localOnlineSwitch, CENTER, padding);
 
-            advancedSettings->onTop(generatePanel, START, END, padding);
-            advancedSettingsLabel->rightOf(advancedSettings, CENTER, padding);
+    //         advancedSettings->onTop(generatePanel, START, END, padding);
+    //         advancedSettingsLabel->rightOf(advancedSettings, CENTER, padding);
 
-            knobsPanel->show();
+    //         knobsPanel->show();
 
-            temperatureKnob->show();
-            temperatureLabel->show();
-            temperaturePanel->show();
-            temperatureUpLabel->show();
+    //         temperatureKnob->show();
+    //         temperatureLabel->show();
+    //         temperaturePanel->show();
+    //         temperatureUpLabel->show();
 
-            topKKnob->show();
-            topKLabel->show();
-            topKPanel->show();
-            topKUpLabel->show();
+    //         topKKnob->show();
+    //         topKLabel->show();
+    //         topKPanel->show();
+    //         topKUpLabel->show();
 
-            topPKnob->show();
-            topPLabel->show();
-            topPPanel->show();
-            topPUpLabel->show();
+    //         topPKnob->show();
+    //         topPLabel->show();
+    //         topPPanel->show();
+    //         topPUpLabel->show();
 
-            CFGKnob->show();
-            CFGLabel->show();
-            CFGPanel->show();
-            CFGUpLabel->show();
+    //         CFGKnob->show();
+    //         CFGLabel->show();
+    //         CFGPanel->show();
+    //         CFGUpLabel->show();
 
 
-            localOnlineSwitch->show();
-            localOnlineSwitchLabel->show();
-        } else {
-            setSize(UI_W, UI_H);
+    //         localOnlineSwitch->show();
+    //         localOnlineSwitchLabel->show();
+    //     } else {
+    //         setSize(UI_W, UI_H);
 
-            generatePanel->setSize(generatePanel->getWidth(), (generatePanel->getHeight()) - 150, true);
-            samplesListPanel->setSize(samplesListPanel->getWidth(), (samplesListPanel->getHeight()) - 150, true);
-            loaderPanel->setSize(loaderPanel->getWidth(), (loaderPanel->getHeight()) - 150, true);
-            localOnlineSwitch->onTop(samplesListPanel, END, END, padding);
-            localOnlineSwitchLabel->leftOf(localOnlineSwitch, CENTER, padding);
+    //         generatePanel->setSize(generatePanel->getWidth(), (generatePanel->getHeight()) - 150, true);
+    //         samplesListPanel->setSize(samplesListPanel->getWidth(), (samplesListPanel->getHeight()) - 150, true);
+    //         loaderPanel->setSize(loaderPanel->getWidth(), (loaderPanel->getHeight()) - 150, true);
+    //         localOnlineSwitch->onTop(samplesListPanel, END, END, padding);
+    //         localOnlineSwitchLabel->leftOf(localOnlineSwitch, CENTER, padding);
 
-            advancedSettings->onTop(generatePanel, START, END, padding);
-            advancedSettingsLabel->rightOf(advancedSettings, CENTER, padding);
+    //         advancedSettings->onTop(generatePanel, START, END, padding);
+    //         advancedSettingsLabel->rightOf(advancedSettings, CENTER, padding);
 
-            knobsPanel->hide();
+    //         knobsPanel->hide();
 
-            temperatureKnob->hide();
-            temperatureLabel->hide();
-            temperaturePanel->hide();
-            temperatureUpLabel->hide();
+    //         temperatureKnob->hide();
+    //         temperatureLabel->hide();
+    //         temperaturePanel->hide();
+    //         temperatureUpLabel->hide();
 
-            topKKnob->hide();
-            topKLabel->hide();
-            topKPanel->hide();
-            topKUpLabel->hide();
+    //         topKKnob->hide();
+    //         topKLabel->hide();
+    //         topKPanel->hide();
+    //         topKUpLabel->hide();
 
-            topPKnob->hide();
-            topPLabel->hide();
-            topPPanel->hide();
-            topPUpLabel->hide();
+    //         topPKnob->hide();
+    //         topPLabel->hide();
+    //         topPPanel->hide();
+    //         topPUpLabel->hide();
 
-            CFGKnob->hide();
-            CFGLabel->hide();
-            CFGPanel->hide();
-            CFGUpLabel->hide();
+    //         CFGKnob->hide();
+    //         CFGLabel->hide();
+    //         CFGPanel->hide();
+    //         CFGUpLabel->hide();
 
-            localOnlineSwitch->hide();
-            localOnlineSwitchLabel->hide();
-        }
-    } else if(checkbox == localOnlineSwitch){
-        if(value == true){
+    //         localOnlineSwitch->hide();
+    //         localOnlineSwitchLabel->hide();
+    //     }
+    // } else if(checkbox == localOnlineSwitch){
+    //     if(value == true){
 
-        } else {
+    //     } else {
 
-        }
-    }
+    //     }
+    // }
     repaint();
 }
 
@@ -1311,7 +1429,7 @@ void MusicGenUI::addSampleToPanel(float padding, std::string name, float button_
 
     sampleLabelWrappers.push_back(new Panel(this));
     sampleLabelWrappers.back()->background_color = WaiveColors::hiddenColor;
-    sampleLabelWrappers.back()->setSize(samplePanels.back()->getWidth() * 0.5f * 0.12f, h);
+    sampleLabelWrappers.back()->setSize(samplePanels.back()->getWidth() * 0.5f * 0.12f - (padding * 2.0f), h);
     sampleLabelWrappers.back()->onTop(samplePanels.back(), START, CENTER, 0);
 
     sampleLabels.push_back(new Label(this, std::to_string(sampleLabels.size() + 1)));
@@ -1327,8 +1445,8 @@ void MusicGenUI::addSampleToPanel(float padding, std::string name, float button_
     sampleNames.back()->setFontSize(fontsize);
     sampleNames.back()->text_color = WaiveColors::text;
     sampleNames.back()->background_color = WaiveColors::hiddenColor;
+    sampleNames.back()->setSize(sampleButtons.back()->getWidth() * 0.5f - sampleLabelWrappers.back()->getWidth() * 0.5f - (padding * 2.0f), sampleLabels.back()->getHeight() - (padding * 2.0f), false);
     // sampleNames.back()->setSize(samplePanels.back()->getWidth() - sampleLabelWrappers.back()->getWidth(), sampleLabelWrappers.back()->getHeight(), false);
-    sampleNames.back()->resizeToFit();
     sampleNames.back()->rightOf(sampleLabelWrappers.back(), CENTER, padding);
     sampleNames.back()->hide();
 

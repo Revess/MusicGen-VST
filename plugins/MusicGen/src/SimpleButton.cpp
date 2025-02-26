@@ -87,7 +87,7 @@ void Button::onNanoDisplay()
     beginPath();
     fontSize(getFontSize());
     fontFaceId(font);
-    fillColor(text_color);
+    fillColor(fToggleValue ? background_color : text_color);
     textAlign(lableAlignment);
     text(width / 2, height / 2, label.c_str(), nullptr);
     closePath();

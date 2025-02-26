@@ -36,16 +36,6 @@ elif [ "$UNAME_S" = "Darwin" ]; then
     
     cd ../../bin/
 
-    dylibbundler -od -b -x MusicGenVST.app/Contents/MacOS/MusicGenVST \
-    -d MusicGenVST.app/Contents/Frameworks \
-    -p @loader_path/../Frameworks
-    dylibbundler -od -b -x MusicGenVST.vst/Contents/MacOS/MusicGenVST \
-    -d MusicGenVST.vst/Contents/Frameworks \
-    -p @loader_path/../Frameworks
-    dylibbundler -od -b -x MusicGenVST.vst3/Contents/MacOS/MusicGenVST \
-    -d MusicGenVST.vst3/Contents/Frameworks \
-    -p @loader_path/../Frameworks
-
     echo "signing"
     # Developer ID Application: Stichting thunderboom Records (M7XQ2U7M47)
     codesign --deep --force --sign - MusicGenVST.vst/Contents/MacOS/MusicGenVST

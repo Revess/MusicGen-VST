@@ -30,6 +30,7 @@ public:
     std::string placeholder;
     Align align;
 
+    bool hasKeyFocus, hover;
     float min = 1;
     float precision = 2;
     float max = 30;
@@ -45,7 +46,6 @@ private:
     Callback *callback;
 
     std::string textValue, lastTextValue;
-    bool hasKeyFocus, hover;
     int position;
 };
 

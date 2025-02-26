@@ -102,6 +102,8 @@ private:
     Button *generateButton;
     Button *openFolderButton;
     Button *dragAndDrop;
+    Button *advancedSettingsButton;
+    Button *localOnlineSwitch;
 
     // text inputs
     TextInput *textPrompt;
@@ -150,19 +152,12 @@ private:
     Label *CFGUpLabel;
     ValueIndicator *CFGLabel;
 
-    Checkbox *advancedSettings;
-    Panel *advancedSettingsPanel;
-    Label *advancedSettingsLabel;
-
     std::vector<Panel*> samplePanels;
     std::vector<Button*> sampleButtons;
     std::vector<Label*> sampleLabels;
     std::vector<Label*> sampleNames;
     std::vector<Panel*> sampleLabelWrappers;
     std::vector<Button*> samplesRemove;
-
-    Checkbox *localOnlineSwitch;
-    Label *localOnlineSwitchLabel;
 
     Panel *samplesListPanel;
     Panel *samplesListInner;

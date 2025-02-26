@@ -11,5 +11,9 @@ __pycache__
 ./plugins/MusicGen/app/app/
 release/*
 vst2/*
+./vst2
 vst3/*
+./vst3
 codesign_cert.txt
+.DS_Store
+*DS_Store

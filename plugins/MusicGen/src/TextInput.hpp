@@ -25,6 +25,7 @@ public:
     std::string getText();
     void undo();
 
+    bool hasKeyFocus, hover;
     std::string placeholder;
     Align align;
 
@@ -39,7 +40,6 @@ private:
     Callback *callback;
 
     std::string textValue, lastTextValue;
-    bool hasKeyFocus, hover;
     int position;
 };
 
